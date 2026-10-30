@@ -489,6 +489,50 @@ const SCENES = {
     bandeau(c, 'VOTE EN SECRET. SEULS LES MOINS NOMBREUX SURVIVENT.     ', G.sur - 10, 1, '#f2ead8', 28, t);
   },
 
+  bw(c, t) {
+    const z = zones(['BLACK', 'WHITE']);
+    const cycle = 2.8;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    // Une tuile est plus haute que l'autre : on ne sait jamais de combien. La ligne passe chez le perdant.
+    const gagneGauche = (n * 7 + 3) % 5 < 3;
+    const fini = p < 0.5 ? 0 : Math.min(1, (p - 0.5) / 0.12);
+    const retour = p > 0.9 ? (p - 0.9) / 0.1 : 0;
+    const cx = z.ax + z.aw / 2;
+    const ligne = Math.round(cx + (gagneGauche ? 1 : -1) * z.aw * 0.1 * fini * (1 - retour));
+    c.fillStyle = '#000';
+    c.fillRect(0, 0, ligne, G.h);
+    c.fillStyle = '#fff';
+    c.fillRect(ligne, 0, G.w - ligne, G.h);
+    // Les deux tuiles arrivent face cachée de chaque côté de la ligne.
+    const th = Math.min(z.ah * 0.82, z.aw * 0.42);
+    const tw = Math.round(th * 0.84);
+    const cy = z.ay + z.ah / 2;
+    const arrive = Math.min(1, p / 0.22);
+    const glisse = (1 - arrive) ** 2 * z.aw * 0.5;
+    [[-1, '#fff', '#000', gagneGauche], [1, '#000', '#fff', !gagneGauche]].forEach(([cote, fond, trame, gagne]) => {
+      const q = 1 + (gagne ? 0.16 : -0.3) * fini * (1 - retour);
+      const w = Math.round(tw * q);
+      const h = Math.round(th * q);
+      const x = Math.round(ligne + cote * (tw * 0.62 + glisse) - w / 2);
+      const y = Math.round(cy - h / 2);
+      c.fillStyle = trame;
+      c.fillRect(x - 1, y - 1, w + 2, h + 2);
+      c.fillStyle = fond;
+      c.fillRect(x, y, w, h);
+      c.fillStyle = trame;
+      for (let k = 3; k < w + h; k += 5) {
+        for (let i = 0; i <= k; i++) {
+          const a = x + i;
+          const b = y + k - i;
+          if (a < x + w && b < y + h) c.fillRect(a, b, 1, 1);
+        }
+      }
+    });
+    nom(c, ['BLACK', 'WHITE'], ['#fff', '#fff'], z);
+    bandeau(c, 'NEUF TUILES. SEULE LA COULEUR SE VOIT.     ', G.sur - 10, 1, '#fff', 28, t);
+  },
+
   skull(c, t) {
     c.fillStyle = '#06040a';
     c.fillRect(0, 0, G.w, G.h);
@@ -725,7 +769,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -800,7 +844,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -860,4 +904,5 @@ function demarre() {
   'https://skull-4rpt.onrender.com/',
   'https://perudo-f6x0.onrender.com/',
   'https://liar-game-nh9k.onrender.com/',
+  'https://black-and-white-hn5n.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));

@@ -138,6 +138,7 @@ main {
 .is-skull { --c: #c792ff; --b: rgba(199, 146, 255, 0.55); }
 .is-perudo { --c: #ff5fb0; --b: rgba(255, 95, 176, 0.55); }
 .is-liar { --c: #f2ead8; --b: rgba(242, 234, 216, 0.55); }
+.is-bw { --c: #ffffff; --b: rgba(255, 255, 255, 0.7); }
 
 .note {
   max-width: 1320px;
@@ -157,6 +158,13 @@ main {
     gap: 14px;
   }
   .jeux li:last-child:nth-child(odd) { grid-column: auto; }
+  /* Huit jeux sur une ligne ne tiennent qu'à partir de 1280 px. */
+  @media (max-width: 1279px) {
+    .jeux {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
   .jeu {
     min-height: 96px;
     padding: 12px 18px;
