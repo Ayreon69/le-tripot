@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Le Tripot · Nos jeux entre amis</title>
+  <meta name="description" content="Le Tripot : tous nos jeux de bluff et de cartes au même endroit. Choisis un jeu, partage le code, et c'est parti.">
+  <meta name="theme-color" content="#160d0c">
+  <meta property="og:title" content="Le Tripot">
+  <meta property="og:description" content="Tous nos jeux de bluff et de cartes au même endroit. Sans compte, sans installation.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bebas+Neue&family=Bodoni+Moda:ital,opsz,wght@1,6..96,700&family=Familjen+Grotesk:wght@500;600;700&family=Limelight&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="entree">
+    <div class="marquee">
+      <svg class="bulbs" aria-hidden="true"><rect class="bulbs-off" /><rect class="bulbs-on" /></svg>
+      <p class="marquee-kicker">Ce soir à l'affiche</p>
+      <h1>Le Tripot</h1>
+    </div>
+    <p class="entree-text">Choisis un jeu, partage le code à tes amis, et c'est parti. Sans compte, sans installation.</p>
+  </header>
+
+  <main>
+    <!-- Pour ajouter un jeu : copier un <li>, changer le lien, le texte et le dessin, puis ajouter son serveur dans le script en bas de page. -->
+    <ul class="affiches">
+      <li style="--i: 0; --tilt: -1deg">
+        <a class="affiche is-indian" href="https://indian-poker-usrn.onrender.com">
+          <svg class="art" viewBox="0 0 300 240" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <g transform="translate(46 18) scale(.78)">
+              <path fill="#15110e" d="M110 340L108 292C96 294 72 296 62 288C54 282 52 272 56 264C50 260 50 252 56 248C48 244 48 236 56 232C52 226 54 220 50 214C40 212 22 206 24 198C26 188 50 160 56 140C58 130 52 118 56 100C66 52 116 30 170 34C246 38 296 96 296 170C296 230 270 270 262 340Z" />
+              <circle cx="94" cy="148" r="14" fill="#f4e8d3" />
+              <circle cx="87" cy="147" r="6.5" fill="#15110e" />
+            </g>
+            <g class="move" transform="rotate(-8 95 72)">
+              <rect x="64" y="28" width="62" height="88" rx="6" fill="#f4e8d3" stroke="#15110e" stroke-width="3" />
+              <text x="95" y="89" text-anchor="middle" font-family="'Abril Fatface', Georgia, serif" font-size="52" fill="#e4432a">?</text>
+            </g>
+          </svg>
+          <div class="affiche-text">
+            <h2>Indian<br>Poker</h2>
+            <p>Tout le monde voit ta carte. Sauf toi.</p>
+          </div>
+          <div class="affiche-foot"><span>2 à 8 joueurs</span><span class="play">Jouer</span></div>
+        </a>
+      </li>
+
+      <li style="--i: 1; --tilt: .8deg">
+        <a class="affiche is-sniper" href="https://holdem-sniper.onrender.com">
+          <svg class="art" viewBox="0 0 300 240" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <g fill="none" stroke="#ff3355">
+              <g class="move">
+                <circle cx="150" cy="120" r="96" stroke-opacity=".45" stroke-width="2" stroke-dasharray="3 9" />
+                <path stroke-width="3" d="M150 8v30M150 202v30M38 120h30M232 120h30" />
+              </g>
+              <circle cx="150" cy="120" r="72" stroke-width="3" />
+            </g>
+            <g transform="rotate(-9 128 120)">
+              <rect x="104" y="86" width="48" height="68" rx="6" fill="#f3f1ec" />
+              <text x="128" y="134" text-anchor="middle" font-family="'Bebas Neue', Impact, sans-serif" font-size="44" fill="#14141d">7</text>
+            </g>
+            <g transform="rotate(9 172 120)">
+              <rect x="148" y="86" width="48" height="68" rx="6" fill="#c8102e" stroke="#07070b" stroke-width="2" />
+              <text x="172" y="134" text-anchor="middle" font-family="'Bebas Neue', Impact, sans-serif" font-size="44" fill="#f3f1ec">7</text>
+            </g>
+          </svg>
+          <div class="affiche-text">
+            <h2>Hold'em<br><em>Sniper</em></h2>
+            <p>On ne bat pas l'adversaire : on l'abat.</p>
+          </div>
+          <div class="affiche-foot"><span>2 à 8 joueurs</span><span class="play">Jouer</span></div>
+        </a>
+      </li>
+
+      <li style="--i: 2; --tilt: -.6deg">
+        <a class="affiche is-equation" href="https://equation-hilo.onrender.com">
+          <svg class="art" viewBox="0 0 300 240" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+              <linearGradient id="eq-high" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb15e" /><stop offset="1" stop-color="#ff5d3a" /></linearGradient>
+              <linearGradient id="eq-low" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fe0ff" /><stop offset="1" stop-color="#3f86ff" /></linearGradient>
+            </defs>
+            <g class="move" stroke="#e7c27a" stroke-opacity=".2" stroke-width="1.5">
+              <path d="M150-30L-40 240M150-30L10 240M150-30L60 240M150-30L105 240M150-30L150 240M150-30L195 240M150-30L240 240M150-30L290 240M150-30L340 240" />
+            </g>
+            <path d="M266 22L34 218" stroke="#e7c27a" stroke-width="2.5" />
+            <g font-family="'Bodoni Moda', Didot, Georgia, serif" font-style="italic" font-weight="700" font-size="104">
+              <text x="26" y="116" fill="url(#eq-high)">20</text>
+              <text x="196" y="218" fill="url(#eq-low)">1</text>
+            </g>
+          </svg>
+          <div class="affiche-text">
+            <h2>Équation<br><em>Hi-Lo</em></h2>
+            <p>Range tes cartes, vise 20 ou 1, et mise.</p>
+          </div>
+          <div class="affiche-foot"><span>2 à 8 joueurs</span><span class="play">Jouer</span></div>
+        </a>
+      </li>
+
+      <li style="--i: 3; --tilt: 1deg">
+        <a class="affiche is-gang" href="https://the-gang-fhvj.onrender.com">
+          <svg class="art" viewBox="0 0 300 240" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+              <path id="gang-star" d="M0-1L.225-.309H.951L.363.118L.588.809L0 .382L-.588.809L-.363.118L-.951-.309H-.225Z" fill="#fff" />
+              <g id="gang-chip">
+                <circle r="46" fill="#e5383b" stroke="#7d121c" stroke-width="2" />
+                <circle r="36" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="7 5" />
+              </g>
+            </defs>
+            <path fill="#f5c451" d="M104 36C122 22 140 26 150 38C160 26 178 22 196 36C204 56 192 76 172 74C160 72 156 62 150 62C144 62 140 72 128 74C108 76 96 56 104 36Z" />
+            <ellipse cx="127" cy="49" rx="11" ry="8" fill="#0a0e16" />
+            <ellipse cx="173" cy="49" rx="11" ry="8" fill="#0a0e16" />
+            <g class="move">
+              <g transform="translate(60 172) rotate(-12)"><use href="#gang-chip" /><use href="#gang-star" transform="scale(17)" /></g>
+              <g transform="translate(120 150) rotate(-4)"><use href="#gang-chip" /><use href="#gang-star" transform="translate(-13 0) scale(11)" /><use href="#gang-star" transform="translate(13 0) scale(11)" /></g>
+              <g transform="translate(180 150) rotate(4)"><use href="#gang-chip" /><use href="#gang-star" transform="translate(0 -12) scale(10)" /><use href="#gang-star" transform="translate(-12 9) scale(10)" /><use href="#gang-star" transform="translate(12 9) scale(10)" /></g>
+              <g transform="translate(240 172) rotate(12)"><use href="#gang-chip" /><use href="#gang-star" transform="translate(-12 -12) scale(10)" /><use href="#gang-star" transform="translate(12 -12) scale(10)" /><use href="#gang-star" transform="translate(-12 12) scale(10)" /><use href="#gang-star" transform="translate(12 12) scale(10)" /></g>
+            </g>
+          </svg>
+          <div class="affiche-text">
+            <h2>The<br>Gang</h2>
+            <p>Le poker où l'on gagne ensemble, sans se parler.</p>
+          </div>
+          <div class="affiche-foot"><span>2 à 6 joueurs</span><span class="play">Jouer</span></div>
+        </a>
+      </li>
+    </ul>
+  </main>
+
+  <footer class="pied">
+    <p>Les serveurs gratuits s'endorment quand personne ne joue : un jeu peut mettre jusqu'à une minute à s'ouvrir.</p>
+    <p>Créations de fans, non officielles.</p>
+  </footer>
+
+  <script>
+    // Les serveurs s'endorment : on les réveille dès l'arrivée ici pour que le jeu choisi s'ouvre plus vite.
+    // Équation Hi-Lo a un serveur séparé de sa page, c'est lui qu'il faut réveiller.
+    [
+      'https://indian-poker-usrn.onrender.com/',
+      'https://holdem-sniper.onrender.com/',
+      'https://equation-hilo-serveur.onrender.com/',
+      'https://the-gang-fhvj.onrender.com/',
+    ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
+  </script>
+</body>
+</html>
