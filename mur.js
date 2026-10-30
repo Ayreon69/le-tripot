@@ -76,6 +76,10 @@ function nom(c, lignes, couleurs, z) {
 const PLUIE = [];
 const TETE = new Path2D('M110 340L108 292C96 294 72 296 62 288C54 282 52 272 56 264C50 260 50 252 56 248C48 244 48 236 56 232C52 226 54 220 50 214C40 212 22 206 24 198C26 188 50 160 56 140C58 130 52 118 56 100C66 52 116 30 170 34C246 38 296 96 296 170C296 230 270 270 262 340Z');
 
+const CRANE = new Path2D('M0-70C34-70 56-46 56-12C56 6 48 18 36 24L34 40C34 46 30 50 24 50L-24 50C-30 50-34 46-34 40L-36 24C-48 18-56 6-56-12C-56-46-34-70 0-70Z');
+const ORBITES = new Path2D('M-36-18C-36-34-11-36-9-18C-7-2-20 6-29 3C-36 1-36-7-36-18ZM36-18C36-34 11-36 9-18C7-2 20 6 29 3C36 1 36-7 36-18Z');
+const NEZ = new Path2D('M0 6L-10 24L-2 21L0 25L2 21L10 24Z');
+
 function etoile(c, x, y, r) {
   c.beginPath();
   for (let i = 0; i < 10; i++) {
@@ -382,6 +386,79 @@ const SCENES = {
     nom(c, ['THE', 'GANG'], ['#f5c451', '#f5c451'], z);
     bandeau(c, "LE POKER OU L'ON GAGNE ENSEMBLE, SANS SE PARLER.     ", G.sur - 10, 1, '#f5c451', 28, t);
   },
+
+  skull(c, t) {
+    c.fillStyle = '#06040a';
+    c.fillRect(0, 0, G.w, G.h);
+    const z = zones(['SKULL']);
+    const cx = z.ax + z.aw / 2;
+    const cy = z.ay + z.ah / 2;
+    const R = Math.min(z.aw, z.ah) * 0.48;
+    // Les rais de lumière que la rosace projette dans la nef.
+    for (let i = 0; i < 16; i++) {
+      const a = t * 0.12 + (i * Math.PI) / 8;
+      c.fillStyle = i % 2 ? 'rgba(47,123,240,.26)' : 'rgba(229,52,75,.3)';
+      c.beginPath();
+      c.moveTo(cx, cy);
+      c.arc(cx, cy, Math.max(G.w, G.sur), a, a + 0.11);
+      c.fill();
+    }
+    // La rosace se retourne : une fleur d'un côté, un crâne de l'autre.
+    const tour = (t * 0.24) % 2;
+    const avance = tour % 1;
+    const angle = (Math.floor(tour) + (avance < 0.8 ? 0 : (avance - 0.8) / 0.2)) * Math.PI;
+    const sx = Math.cos(angle);
+    const crane = sx < 0;
+    c.save();
+    c.translate(cx, cy);
+    c.scale(Math.max(0.06, Math.abs(sx)) * (R / 100), R / 100);
+    c.fillStyle = '#0c0a12';
+    c.beginPath();
+    c.arc(0, 0, 100, 0, 7);
+    c.fill();
+    const interieur = crane ? 72 : 60;
+    for (let i = 0; i < 16; i++) {
+      const a = (i * Math.PI) / 8 - Math.PI / 2;
+      c.fillStyle = crane ? (i % 2 ? '#4a1fa8' : '#c4142c') : i % 2 ? '#2f7bf0' : '#e5344b';
+      c.beginPath();
+      c.arc(0, 0, 95, a - 0.15, a + 0.15);
+      c.arc(0, 0, interieur + 3, a + 0.15, a - 0.15, true);
+      c.fill();
+    }
+    if (crane) {
+      c.translate(0, 8);
+      c.scale(0.95, 0.95);
+      c.fillStyle = '#f3e7cc';
+      c.fill(CRANE);
+      c.fillStyle = `rgb(${Math.round(190 + Math.sin(t * 4) * 60)},20,36)`;
+      c.fill(ORBITES);
+      c.fillStyle = '#0c0a12';
+      c.fill(NEZ);
+      for (const x of [-22, -7.5, 7.5, 22]) c.fillRect(x - 1.8, 32, 3.6, 18);
+      c.fillRect(-34, 30, 68, 3.6);
+    } else {
+      for (let i = 0; i < 8; i++) {
+        c.save();
+        c.rotate((i * Math.PI) / 4);
+        c.fillStyle = '#ff86b6';
+        c.beginPath();
+        c.ellipse(0, -35, 11, 21, 0, 0, 7);
+        c.fill();
+        c.restore();
+      }
+      c.fillStyle = '#f2bb4a';
+      c.beginPath();
+      c.arc(0, 0, 17, 0, 7);
+      c.fill();
+      c.fillStyle = '#c4142c';
+      c.beginPath();
+      c.arc(0, 0, 8, 0, 7);
+      c.fill();
+    }
+    c.restore();
+    nom(c, ['SKULL'], ['#efe6d2'], z);
+    bandeau(c, 'TROIS FLEURS, UN CRANE. TU EN RETOURNES COMBIEN ?     ', G.sur - 10, 1, '#c792ff', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -546,7 +623,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -621,7 +698,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -678,4 +755,5 @@ function demarre() {
   'https://holdem-sniper.onrender.com/',
   'https://equation-hilo-serveur.onrender.com/',
   'https://the-gang-fhvj.onrender.com/',
+  'https://skull-4rpt.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));

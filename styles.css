@@ -57,6 +57,9 @@ main {
   list-style: none;
 }
 
+/* Nombre de jeux impair : le dernier prend toute la largeur plutôt que de laisser un trou. */
+.jeux li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
 .jeu {
   position: relative;
   display: flex;
@@ -132,6 +135,7 @@ main {
 .is-sniper { --c: #ff3a5e; --b: rgba(255, 58, 94, 0.55); }
 .is-equation { --c: #6fd6ff; --b: rgba(111, 214, 255, 0.55); }
 .is-gang { --c: #f5c451; --b: rgba(245, 196, 81, 0.55); }
+.is-skull { --c: #c792ff; --b: rgba(199, 146, 255, 0.55); }
 
 .note {
   max-width: 1320px;
@@ -143,15 +147,19 @@ main {
 
 @media (min-width: 760px) {
   main { padding: 0 24px max(12px, env(safe-area-inset-bottom)); }
+  /* Sur grand écran, tous les jeux tiennent sur une ligne, quel que soit leur nombre. */
   .jeux {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     gap: 14px;
   }
+  .jeux li:last-child:nth-child(odd) { grid-column: auto; }
   .jeu {
     min-height: 96px;
     padding: 12px 18px;
   }
-  .jeu-nom { font-size: clamp(1.4rem, 2.3vw, 2rem); }
+  .jeu-nom { font-size: clamp(1.05rem, 1.9vw, 1.9rem); }
   .jeu-info { font-size: 0.86rem; }
   .note { font-size: 0.76rem; margin-top: 10px; }
 }
