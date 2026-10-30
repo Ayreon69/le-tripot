@@ -158,8 +158,8 @@ main {
     gap: 14px;
   }
   .jeux li:last-child:nth-child(odd) { grid-column: auto; }
-  /* Huit jeux sur une ligne ne tiennent qu'à partir de 1280 px. */
-  @media (max-width: 1279px) {
+  /* Huit jeux sur une ligne ne tiennent qu'à partir de 1500 px. */
+  @media (max-width: 1499px) {
     .jeux {
       grid-auto-flow: row;
       grid-template-columns: repeat(4, minmax(0, 1fr));
