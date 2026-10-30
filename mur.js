@@ -387,6 +387,74 @@ const SCENES = {
     bandeau(c, "LE POKER OU L'ON GAGNE ENSEMBLE, SANS SE PARLER.     ", G.sur - 10, 1, '#f5c451', 28, t);
   },
 
+  perudo(c, t) {
+    c.fillStyle = '#0b0710';
+    c.fillRect(0, 0, G.w, G.h);
+    const z = zones(['PERUDO']);
+    const cx = z.ax + z.aw / 2;
+    const bas = z.ay + z.ah - 1;
+    // Le soleil de l'affiche chicha, derrière le gobelet.
+    for (let i = 0; i < 16; i++) {
+      const a = t * 0.1 + (i * Math.PI) / 8;
+      c.fillStyle = i % 2 ? '#5a1070' : '#1c0a2e';
+      c.beginPath();
+      c.moveTo(cx, bas - z.ah * 0.4);
+      c.arc(cx, bas - z.ah * 0.4, Math.max(G.w, G.sur), a, a + Math.PI / 8);
+      c.fill();
+    }
+    // Le gobelet s'agite, se lève, et trois dés apparaissent : ils changent à chaque lancer.
+    const cycle = 3.8;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const leve = p < 0.34 ? 0 : p < 0.46 ? (p - 0.34) / 0.12 : p < 0.88 ? 1 : 1 - (p - 0.88) / 0.12;
+    const d = Math.max(5, Math.min(z.aw * 0.24, z.ah * 0.27));
+    const pointes = (f) => ({ 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]], 5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]] })[f];
+    [-1, 0, 1].forEach((k, i) => {
+      const f = 1 + ((n * 7 + i * 5 + (n * i) % 4) % 6);
+      const x = Math.round(cx + k * d * 1.14 - d / 2);
+      const y = Math.round(bas - d);
+      c.fillStyle = ['#ffe600', '#12e6ff', '#19f26b'][i];
+      c.fillRect(x, y, d, d);
+      c.fillStyle = '#0b0710';
+      const r = Math.max(1, Math.round(d * 0.17));
+      if (f === 1) {
+        // Le Paco : un soleil.
+        c.beginPath();
+        c.arc(x + d / 2, y + d / 2, d * 0.2, 0, 7);
+        c.fill();
+        for (let a = 0; a < 8; a++) {
+          const b = (a * Math.PI) / 4 + t;
+          c.fillRect(Math.round(x + d / 2 + Math.cos(b) * d * 0.33) - 0.5, Math.round(y + d / 2 + Math.sin(b) * d * 0.33) - 0.5, 1, 1);
+        }
+      } else {
+        for (const [a, b] of pointes(f)) c.fillRect(Math.round(x + d / 2 + a * d * 0.27 - r / 2), Math.round(y + d / 2 + b * d * 0.27 - r / 2), r, r);
+      }
+    });
+    const lg = d * 3.7;
+    const h = d * 2.3;
+    const secoue = p < 0.34 ? Math.sin(t * 34) * 0.1 : 0;
+    c.save();
+    // Levé, le gobelet s'arrête juste au-dessus des dés : il reste entier à l'écran.
+    c.translate(cx + secoue * d * 1.5, bas - leve * d * 1.2 - (p < 0.34 ? Math.abs(Math.sin(t * 17)) * d * 0.12 : 0));
+    c.rotate(secoue);
+    c.fillStyle = '#ff2d95';
+    c.beginPath();
+    c.moveTo(-lg / 2, 0);
+    c.lineTo(lg / 2, 0);
+    c.lineTo(lg * 0.36, -h);
+    c.lineTo(-lg * 0.36, -h);
+    c.fill();
+    c.strokeStyle = '#0b0710';
+    c.stroke();
+    c.fillStyle = '#ffe600';
+    c.fillRect(-lg * 0.43, -h * 0.62, lg * 0.86, Math.max(2, h * 0.2));
+    c.fillStyle = '#0b0710';
+    const pas = Math.max(3, Math.round(lg / 9));
+    for (let x = -lg * 0.4; x < lg * 0.4; x += pas) c.fillRect(Math.round(x), Math.round(-h * 0.55), Math.ceil(pas / 2), Math.max(1, Math.round(h * 0.07)));
+    c.restore();
+    nom(c, ['PERUDO'], ['#ffe600'], z);
+  },
+
   skull(c, t) {
     c.fillStyle = '#06040a';
     c.fillRect(0, 0, G.w, G.h);
@@ -623,7 +691,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -698,7 +766,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -756,4 +824,5 @@ function demarre() {
   'https://equation-hilo-serveur.onrender.com/',
   'https://the-gang-fhvj.onrender.com/',
   'https://skull-4rpt.onrender.com/',
+  'https://perudo-f6x0.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
