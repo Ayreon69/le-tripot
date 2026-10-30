@@ -1,402 +1,161 @@
-/* Le Tripot : une arrière-salle, un fronton à ampoules, et une affiche par jeu, chacune dans le style de son jeu. */
-:root {
-  --mur: #160d0c;
-  --mur-2: #241310;
-  --creme: #f8ecd6;
-  --sourdine: #bfae99;
-  --ampoule: #ffe6ab;
-  --laiton: #c9a058;
-  --gouttiere: 16px;
-  color-scheme: dark;
-}
+/* Le Mur : tout l'écran est un mur de LED géant, qui joue la scène du jeu qu'on survole. */
+:root { color-scheme: dark; }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html {
-  background: var(--mur);
-}
+html, body { height: 100%; }
 
 body {
   margin: 0;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  padding: max(16px, env(safe-area-inset-top)) var(--gouttiere) max(16px, env(safe-area-inset-bottom));
-  overflow-x: clip;
-  color: var(--creme);
+  overflow: hidden;
+  background: #050507;
+  color: #fff;
   font-family: 'Familjen Grotesk', 'Segoe UI', system-ui, sans-serif;
-  background:
-    radial-gradient(760px 420px at 50% 0, rgba(255, 170, 70, 0.2), transparent 70%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 44px, transparent 44px 88px),
-    var(--mur);
   -webkit-font-smoothing: antialiased;
 }
 
-/* Le fronton */
-.entree {
-  text-align: center;
-}
-
-.marquee {
-  position: relative;
-  max-width: 540px;
-  margin: 0 auto;
-  padding: 25px 36px 21px;
-  border: 2px solid var(--laiton);
-  border-radius: 16px;
-  background: linear-gradient(#3a140f, #210d0a);
-  box-shadow: 0 16px 40px -14px #000;
-}
-
-.bulbs {
-  position: absolute;
+#mur {
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none;
 }
 
-.bulbs rect {
-  x: 9px;
-  y: 9px;
-  width: calc(100% - 18px);
-  height: calc(100% - 18px);
-  rx: 8px;
-  fill: none;
-  stroke-width: 6;
-  stroke-linecap: round;
+.invisible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 
-.bulbs-off {
-  stroke: #6e4f26;
-  stroke-dasharray: 0 16;
+.sans-gl .invisible {
+  position: fixed;
+  top: 32%;
+  left: 0;
+  width: 100%;
+  height: auto;
+  clip-path: none;
+  text-align: center;
+  font: 900 4rem 'Doto', monospace;
 }
 
-.bulbs-on {
-  stroke: var(--ampoule);
-  stroke-dasharray: 0 48;
-  filter: drop-shadow(0 0 4px #ffb84d);
-  animation: chase 1.2s steps(3) infinite;
-}
-
-@keyframes chase {
-  to {
-    stroke-dashoffset: -48;
-  }
-}
-
-.marquee-kicker {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--ampoule);
-}
-
-h1 {
-  margin: 2px 0 0;
-  font-family: 'Limelight', Georgia, serif;
-  font-size: clamp(2.7rem, 11vw, 4.4rem);
-  font-weight: 400;
-  line-height: 1.05;
-  color: var(--creme);
-  text-shadow: 0 0 22px rgba(255, 184, 77, 0.55);
-  animation: allumage 1.1s linear both;
-}
-
-@keyframes allumage {
-  0%, 12%, 26% {
-    opacity: 0.35;
-    text-shadow: none;
-  }
-  8%, 20%, 100% {
-    opacity: 1;
-  }
-}
-
-.entree-text {
-  max-width: 34em;
-  margin: 12px auto 14px;
-  font-size: 0.98rem;
-  line-height: 1.35;
-  color: var(--sourdine);
-}
-
-/* Le mur d'affiches */
 main {
-  flex: 1;
+  position: fixed;
+  inset: auto 0 0;
+  padding: 0 12px max(8px, env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, #050507 34px);
 }
 
-.affiches {
+.jeux {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  max-width: 1200px;
+  gap: 8px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 0;
+  padding: 34px 0 0;
   list-style: none;
 }
 
-.affiches li {
+.jeu {
+  position: relative;
   display: flex;
-  animation: collage 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
-  animation-delay: calc(var(--i) * 80ms + 150ms);
+  flex-direction: column;
+  justify-content: center;
+  min-height: 76px;
+  padding: 8px 12px;
+  overflow: hidden;
+  border: 2px solid var(--b);
+  border-radius: 10px;
+  background: rgba(8, 8, 12, 0.92);
+  color: var(--c);
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s, border-color 0.12s, box-shadow 0.12s, transform 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.4);
 }
 
-@keyframes collage {
-  from {
-    opacity: 0;
-    transform: translateY(22px) scale(0.96);
+.jeu-nom {
+  font-family: 'Doto', 'Courier New', monospace;
+  font-size: 1.32rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.jeu-info {
+  margin-top: 5px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #bdbdc7;
+  transition: color 0.12s;
+}
+
+.jeu::after {
+  content: '→';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  opacity: 0;
+  transform: translate(-8px, -50%);
+  transition: opacity 0.12s, transform 0.16s;
+}
+
+.jeu.is-on,
+.jeu:focus-visible {
+  border-color: var(--c);
+  box-shadow: 0 0 22px -3px var(--c);
+}
+
+@media (hover: hover) {
+  .jeu:hover {
+    border-color: var(--c);
+    background: var(--c);
+    color: #08080c;
+    box-shadow: 0 0 40px -2px var(--c);
+    transform: translateY(-4px);
+  }
+  .jeu:hover .jeu-info { color: #08080c; }
+  .jeu:hover::after {
+    opacity: 1;
+    transform: translate(0, -50%);
   }
 }
 
-.affiche {
-  position: relative;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-radius: 6px;
-  background: var(--fond);
-  color: var(--texte);
-  text-decoration: none;
-  transform: rotate(var(--tilt));
-  box-shadow: 0 16px 26px -12px #000, 0 2px 5px rgba(0, 0, 0, 0.5);
-  transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.3), box-shadow 0.22s;
+.jeu:active { transform: scale(0.97); }
+
+.jeu:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
 }
 
-/* Le filet intérieur de l'affiche et la lumière venue du fronton */
-.affiche::after {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border: 1px solid var(--filet);
-  border-radius: 3px;
-  background: linear-gradient(rgba(255, 240, 210, 0.1), transparent 34%);
-  pointer-events: none;
-}
+.is-indian { --c: #ff6a45; --b: rgba(255, 106, 69, 0.55); }
+.is-sniper { --c: #ff3a5e; --b: rgba(255, 58, 94, 0.55); }
+.is-equation { --c: #6fd6ff; --b: rgba(111, 214, 255, 0.55); }
+.is-gang { --c: #f5c451; --b: rgba(245, 196, 81, 0.55); }
 
-.affiche:hover,
-.affiche:focus-visible {
-  transform: translateY(-6px) rotate(0) scale(1.02);
-  box-shadow: 0 26px 34px -14px #000, 0 0 34px -6px var(--halo);
-}
-
-.affiche:active {
-  transform: scale(0.98);
-}
-
-.affiche:focus-visible {
-  outline: 3px solid var(--ampoule);
-  outline-offset: 3px;
-}
-
-.art {
-  display: block;
-  width: 100%;
-  aspect-ratio: 300 / 200;
-  background: var(--fond-art, transparent);
-}
-
-.move {
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.3);
-}
-
-.affiche-text {
-  flex: 1;
-  padding: 2px 13px 8px;
-}
-
-h2 {
-  margin: 0;
-  font-family: var(--titre);
-  font-size: var(--taille);
-  font-weight: 400;
-  line-height: 0.98;
-  color: var(--texte-titre, var(--texte));
-}
-
-h2 em {
-  font-style: inherit;
-  color: var(--accent);
-}
-
-.affiche-text p {
-  margin: 7px 0 0;
-  font-size: 0.84rem;
-  font-weight: 600;
-  line-height: 1.22;
-  color: var(--texte-2);
-}
-
-.affiche-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px 6px;
-  padding: 0 13px 13px;
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: var(--texte-2);
-}
-
-.play {
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: var(--bouton);
-  color: var(--bouton-texte);
-  font-size: 0.8rem;
-}
-
-.play::after {
-  content: ' →';
-}
-
-/* Chaque affiche reprend les couleurs et la police de son jeu */
-.is-indian {
-  --fond: #e4432a;
-  --texte: #15110e;
-  --texte-2: #15110e;
-  --filet: rgba(21, 17, 14, 0.4);
-  --halo: #e4432a;
-  --titre: 'Abril Fatface', Georgia, serif;
-  --taille: 1.85rem;
-  --bouton: #15110e;
-  --bouton-texte: #f4e8d3;
-}
-.is-indian:hover .move,
-.is-indian:focus-visible .move {
-  transform: rotate(-8deg) translateY(-5px);
-}
-
-.is-sniper {
-  --fond: #0a0a10;
-  --fond-art: radial-gradient(circle at 50% 50%, rgba(255, 51, 85, 0.3), transparent 62%);
-  --texte: #f3f1ec;
-  --texte-2: #c9c7d3;
-  --filet: rgba(255, 51, 85, 0.42);
-  --halo: #ff3355;
-  --accent: #ff3355;
-  --titre: 'Bebas Neue', Impact, sans-serif;
-  --taille: 2.35rem;
-  --bouton: #ff3355;
-  --bouton-texte: #0a0a10;
-}
-.is-sniper:hover .move,
-.is-sniper:focus-visible .move {
-  transform: rotate(45deg);
-}
-
-.is-equation {
-  --fond: #0c0a12;
-  --texte: #f6eedc;
-  --texte-2: #c6bca6;
-  --filet: rgba(231, 194, 122, 0.45);
-  --halo: #e7c27a;
-  --accent: #e7c27a;
-  --titre: 'Bodoni Moda', Didot, Georgia, serif;
-  --taille: 1.85rem;
-  --bouton: #e7c27a;
-  --bouton-texte: #0c0a12;
-}
-.is-equation h2 {
-  font-style: italic;
-  font-weight: 700;
-}
-.is-equation:hover .move,
-.is-equation:focus-visible .move {
-  transform: scale(1.12);
-}
-
-.is-gang {
-  --fond: #0e1420;
-  --fond-art: radial-gradient(circle at 50% 0, #1c2a45, transparent 72%);
-  --texte: #eef1f6;
-  --texte-titre: #f5c451;
-  --texte-2: #b4bdd0;
-  --filet: rgba(245, 196, 81, 0.4);
-  --halo: #f5c451;
-  --titre: 'Bebas Neue', Impact, sans-serif;
-  --taille: 2.35rem;
-  --bouton: #f5c451;
-  --bouton-texte: #0e1420;
-}
-.is-gang:hover .move,
-.is-gang:focus-visible .move {
-  transform: translateY(-6px);
-}
-
-.pied {
-  max-width: 44em;
-  margin: 18px auto 0;
+.note {
+  max-width: 1320px;
+  margin: 7px auto 0;
   text-align: center;
-  font-size: 0.78rem;
-  line-height: 1.35;
-  color: var(--sourdine);
-}
-
-.pied p {
-  margin: 0 0 3px;
+  font-size: 0.7rem;
+  color: #8e8e99;
 }
 
 @media (min-width: 760px) {
-  :root {
-    --gouttiere: 28px;
-  }
-  body {
-    padding-top: 28px;
-  }
-  .entree-text {
-    margin: 18px auto 30px;
-    font-size: 1.08rem;
-  }
-  .marquee {
-    padding: 36px 40px 30px;
-  }
-  .art {
-    aspect-ratio: 300 / 215;
-  }
-  .affiches {
+  main { padding: 0 24px max(12px, env(safe-area-inset-bottom)); }
+  .jeux {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 22px;
+    gap: 14px;
   }
-  .affiche-text {
-    padding: 4px 18px 10px;
+  .jeu {
+    min-height: 96px;
+    padding: 12px 18px;
   }
-  .affiche-text p {
-    font-size: 0.95rem;
-  }
-  .affiche-foot {
-    padding: 0 18px 18px;
-    font-size: 0.84rem;
-  }
-  .play {
-    font-size: 0.88rem;
-  }
-  .is-indian,
-  .is-equation {
-    --taille: clamp(1.9rem, 3.1vw, 2.6rem);
-  }
-  .is-sniper,
-  .is-gang {
-    --taille: clamp(2.4rem, 4vw, 3.3rem);
-  }
-  .pied {
-    margin-top: 28px;
-  }
+  .jeu-nom { font-size: clamp(1.4rem, 2.3vw, 2rem); }
+  .jeu-info { font-size: 0.86rem; }
+  .note { font-size: 0.76rem; margin-top: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
+  * { transition: none !important; }
 }
