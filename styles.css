@@ -151,20 +151,12 @@ main {
 @media (min-width: 760px) {
   main { padding: 0 24px max(12px, env(safe-area-inset-bottom)); }
   /* Sur grand écran, tous les jeux tiennent sur une ligne, quel que soit leur nombre. */
+  /* Huit jeux sur une seule ligne déborderaient : deux rangées de quatre. */
   .jeux {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
   }
   .jeux li:last-child:nth-child(odd) { grid-column: auto; }
-  /* Huit jeux sur une ligne ne tiennent qu'à partir de 1500 px. */
-  @media (max-width: 1499px) {
-    .jeux {
-      grid-auto-flow: row;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
   .jeu {
     min-height: 96px;
     padding: 12px 18px;
