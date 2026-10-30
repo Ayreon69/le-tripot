@@ -455,6 +455,40 @@ const SCENES = {
     nom(c, ['PERUDO'], ['#ffe600'], z);
   },
 
+  liar(c, t) {
+    c.fillStyle = '#e9e1cf';
+    c.fillRect(0, 0, G.w, G.h);
+    const z = zones(['LIAR', 'GAME']);
+    // Une foule de masques : à chaque vote la majorité s'efface, jusqu'au dernier, qui vire au rouge.
+    const col = 9;
+    const lig = 3;
+    const pas = Math.min(z.aw / col, z.ah / lig);
+    const r = Math.max(2, pas * 0.36);
+    const ox = z.ax + (z.aw - pas * col) / 2 + pas / 2;
+    const oy = z.ay + (z.ah - pas * lig) / 2 + pas / 2;
+    const rang = (i) => (i * 17 + 5) % (col * lig);
+    const restants = [27, 11, 4, 1][Math.floor(t / 1.1) % 4];
+    for (let i = 0; i < col * lig; i++) {
+      const vivant = rang(i) < restants;
+      const dernier = vivant && restants === 1;
+      const x = ox + (i % col) * pas;
+      const y = oy + Math.floor(i / col) * pas;
+      const q = dernier ? r * 1.5 : r;
+      c.fillStyle = dernier ? '#c9231a' : vivant ? '#14110f' : '#d6cdb9';
+      c.beginPath();
+      c.ellipse(x, y, q * 0.82, q, 0, 0, 7);
+      c.fill();
+      if (vivant) {
+        c.fillStyle = '#e9e1cf';
+        const o = Math.max(1, Math.round(q * 0.24));
+        c.fillRect(Math.round(x - q * 0.38 - o / 2), Math.round(y - q * 0.25), o, o);
+        c.fillRect(Math.round(x + q * 0.38 - o / 2), Math.round(y - q * 0.25), o, o);
+      }
+    }
+    nom(c, ['LIAR', 'GAME'], ['#14110f', '#c9231a'], z);
+    bandeau(c, 'VOTE EN SECRET. SEULS LES MOINS NOMBREUX SURVIVENT.     ', G.sur - 10, 1, '#f2ead8', 28, t);
+  },
+
   skull(c, t) {
     c.fillStyle = '#06040a';
     c.fillRect(0, 0, G.w, G.h);
@@ -691,7 +725,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -766,7 +800,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -825,4 +859,5 @@ function demarre() {
   'https://the-gang-fhvj.onrender.com/',
   'https://skull-4rpt.onrender.com/',
   'https://perudo-f6x0.onrender.com/',
+  'https://liar-game-nh9k.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));

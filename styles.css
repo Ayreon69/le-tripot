@@ -137,6 +137,7 @@ main {
 .is-gang { --c: #f5c451; --b: rgba(245, 196, 81, 0.55); }
 .is-skull { --c: #c792ff; --b: rgba(199, 146, 255, 0.55); }
 .is-perudo { --c: #ff5fb0; --b: rgba(255, 95, 176, 0.55); }
+.is-liar { --c: #f2ead8; --b: rgba(242, 234, 216, 0.55); }
 
 .note {
   max-width: 1320px;
