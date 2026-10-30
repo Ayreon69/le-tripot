@@ -1,7 +1,7 @@
-# Le Tripot
+# akhis-games
 
 La page d'accueil de nos jeux : tout l'écran est un mur de LED qui joue une scène pour chaque jeu, on clique et on joue.
-Une simple page statique, sans étape de build : **https://le-tripot.onrender.com**
+Une simple page statique, sans étape de build : **https://akhis-games.onrender.com**
 
 ## Ajouter un jeu
 

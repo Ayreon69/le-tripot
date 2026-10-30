@@ -132,7 +132,7 @@ const SCENES = {
       enseigne(c, ENSEIGNES[p.g], Math.round(p.x * G.w), Math.round(((p.y + t * p.v) % (G.sur + 20)) - 14), p.e);
     });
 
-    const mots = G.paysage ? ['LE TRIPOT'] : ['LE', 'TRIPOT'];
+    const mots = G.paysage ? ['AKHIS-GAMES'] : ['AKHIS-', 'GAMES'];
     const plus = Math.max(...mots.map((m) => m.length));
     const e = Math.max(1, Math.min(Math.floor((G.w - 6) / (plus * 6)), Math.floor((G.sur - 26) / (mots.length * 9))));
     const hb = mots.length * 9 * e;
