@@ -150,7 +150,6 @@ main {
 
 @media (min-width: 760px) {
   main { padding: 0 24px max(12px, env(safe-area-inset-bottom)); }
-  /* Sur grand écran, tous les jeux tiennent sur une ligne, quel que soit leur nombre. */
   /* Huit jeux sur une seule ligne déborderaient : deux rangées de quatre. */
   .jeux {
     grid-template-columns: repeat(4, minmax(0, 1fr));
