@@ -1539,6 +1539,97 @@ const SCENES = {
     });
     bandeau(c, 'PLUS PETITE ? PLUS GRANDE ? RETIENS TOUT, ET REUNIS TROIS CARTES PAREILLES.     ', G.sur - 10, 1, '#ffd23f', 28, t);
   },
+
+  citadelles(c, t) {
+    const z = zones(['CITADELLES']);
+    // La nuit sur la ville, et les pierres de la cathédrale à peine visibles.
+    c.fillStyle = '#120e18';
+    c.fillRect(0, 0, G.w, G.h);
+    c.fillStyle = '#1b1524';
+    for (let y = 1; y < G.sur - 11; y += 4) for (let x = (y % 8 === 1 ? 0 : 4); x < G.w; x += 8) c.fillRect(x, y, 6, 2);
+    // Sept fenêtres en ogive, la plus haute au centre : une cité complète. Chacune prend la couleur d'un type de quartier.
+    const VERRES = ['#ffc933', '#2f7cf0', '#2cb65f', '#e8392f', '#9a4ff0', '#2f7cf0', '#ffc933'];
+    const g = z.aw >= 90 ? 3 : z.aw >= 50 ? 2 : 1;
+    const lw = Math.max(3, Math.floor((z.aw * 0.94 - 6 * g) / 7));
+    const x0 = Math.round(z.ax + (z.aw - (7 * lw + 6 * g)) / 2);
+    const sol = z.ay + z.ah;
+    // Chaque tour : les vitraux s'allument un à un, la cité brille, puis le Condottiere en brise un, et tout repart.
+    const cycle = 9;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const CIBLES = [4, 1, 5, 2, 6, 0, 3];
+    const brisee = CIBLES[n % CIBLES.length];
+    const complet = p > 0.6 && p < 0.72;
+    const eteint = Math.max(0, Math.min(1, (p - 0.93) / 0.06));
+    const fenetre = (i) => {
+      const lh = Math.max(lw + 2, Math.round(z.ah * (0.56 + 0.42 * (1 - Math.abs(i - 3) / 3)) - 1));
+      return { x: x0 + i * (lw + g), y: sol - lh, h: lh };
+    };
+    // La demi-largeur de chaque rangée : la pointe de l'ogive, puis le corps droit.
+    const demi = (r, arc) => (r >= arc ? lw / 2 : Math.max(0.5, (lw / 2) * Math.sqrt((r + 1) / arc)));
+    for (let i = 0; i < 7; i++) {
+      const f = fenetre(i);
+      const arc = Math.max(2, Math.ceil(lw * 0.9));
+      const allume = Math.max(0, Math.min(1, (p - (0.04 + i * 0.075)) / 0.03)) * (1 - eteint);
+      const casse = i === brisee && p > 0.78;
+      const onde = 0.82 + 0.18 * Math.sin(t * 2.2 + i * 1.3);
+      // Les rayons qui descendent vers le sol.
+      if (allume > 0 && !casse) {
+        c.fillStyle = VERRES[i];
+        for (let k = 0; k < 3; k++) {
+          c.globalAlpha = allume * (0.16 - k * 0.04);
+          c.fillRect(f.x - k, sol, lw + 2 * k, Math.max(0, G.sur - 11 - sol));
+        }
+        c.globalAlpha = 1;
+      }
+      for (let r = 0; r < f.h; r++) {
+        const d = demi(r, arc);
+        const x1 = Math.round(f.x + lw / 2 - d);
+        const larg = Math.max(1, Math.round(2 * d));
+        // Le plomb tout autour, plus sombre que le mur.
+        c.fillStyle = '#07050b';
+        c.fillRect(x1 - 1, f.y + r - (r === 0 ? 1 : 0), larg + 2, r === 0 ? 2 : 1);
+        for (let dx = 0; dx < larg; dx++) {
+          const px = x1 + dx;
+          const py = f.y + r;
+          const plomb = (r > 0 && r % 5 === 0) || (lw >= 5 && px === f.x + Math.floor(lw / 2));
+          if (plomb) c.fillStyle = '#07050b';
+          else if (casse) {
+            // Il ne reste que des tessons sur les bords.
+            const reste = (dx === 0 || dx === larg - 1) && (r * 7 + i * 3) % 5 < 2;
+            c.fillStyle = reste ? VERRES[i] : '#0a0810';
+          } else if (allume > 0) {
+            const tesson = (px * 13 + r * 7 + i * 5) % 9;
+            c.fillStyle = tesson === 0 || (complet && tesson < 3 && Math.sin(t * 9 + i) > 0) ? '#fff4c2' : VERRES[i];
+            c.globalAlpha = allume * (tesson === 0 ? 0.95 : tesson < 4 ? onde : onde * 0.72);
+          } else c.fillStyle = '#231c2f';
+          c.fillRect(px, py, 1, 1);
+          c.globalAlpha = 1;
+        }
+      }
+      // Les éclats retombent de la fenêtre brisée.
+      if (casse && p < 0.93) {
+        const q = (p - 0.78) / 0.15;
+        for (let k = 0; k < 14; k++) {
+          const dir = ((k * 37) % 11) / 5 - 1;
+          const ex = Math.round(f.x + lw / 2 + dir * (lw * 0.4 + q * lw * 1.4));
+          const ey = Math.round(f.y + ((k * 17) % f.h) * (0.3 + 0.2 * (1 - q)) + q * q * z.ah * (0.7 + ((k * 5) % 4) / 8));
+          if (ey >= G.sur - 11) continue;
+          c.fillStyle = k % 3 === 0 ? '#fff4c2' : VERRES[i];
+          c.fillRect(ex, ey, 1 + (k % 2), 1);
+        }
+      }
+    }
+    // L'éclair doré quand la cité est complète.
+    if (complet) {
+      c.globalAlpha = 0.07 + 0.05 * Math.sin(t * 9);
+      c.fillStyle = '#ffd24a';
+      c.fillRect(0, 0, G.w, G.sur - 11);
+      c.globalAlpha = 1;
+    }
+    nom(c, ['CITADELLES'], ['#ffd24a'], z);
+    bandeau(c, 'UN PERSONNAGE SECRET, UNE CITE A BATIR, ET GARE A L ASSASSIN.     ', G.sur - 10, 1, '#ffc933', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -1709,7 +1800,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -1784,7 +1875,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -1854,4 +1945,5 @@ function demarre() {
   'https://just-one-3bg0.onrender.com/',
   'https://skyjo-zmtt.onrender.com/',
   'https://trio-k6b5.onrender.com/',
+  'https://citadelles-59hy.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));

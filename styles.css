@@ -159,6 +159,7 @@ main {
 .is-justone { --c: #4a86ff; --b: rgba(74, 134, 255, 0.6); }
 .is-skyjo { --c: #ee6bff; --b: rgba(238, 107, 255, 0.55); }
 .is-trio { --c: #22c7c4; --b: rgba(34, 199, 196, 0.55); }
+.is-citadelles { --c: #b45cff; --b: rgba(180, 92, 255, 0.55); }
 
 .note {
   max-width: 1320px;
