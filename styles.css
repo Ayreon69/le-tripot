@@ -156,6 +156,7 @@ main {
 .is-wavelength { --c: #ff8a2b; --b: rgba(255, 138, 43, 0.55); }
 .is-undercover { --c: #66e04f; --b: rgba(102, 224, 79, 0.55); }
 .is-inspecteur { --c: #e0b77d; --b: rgba(224, 183, 125, 0.55); }
+.is-justone { --c: #4a86ff; --b: rgba(74, 134, 255, 0.6); }
 
 .note {
   max-width: 1320px;
@@ -167,7 +168,7 @@ main {
 
 @media (min-width: 760px) {
   main { padding: 0 24px max(12px, env(safe-area-inset-bottom)); }
-  /* Cinq par rangée : les quatorze jeux tiennent en trois rangées et laissent de la hauteur au mur. */
+  /* Cinq par rangée : les quinze jeux tiennent en trois rangées pleines et laissent de la hauteur au mur. */
   .jeux {
     --par-rangee: 5;
     --ecart: 14px;
@@ -181,10 +182,11 @@ main {
   .note { font-size: 0.76rem; margin-top: 10px; }
 }
 
-/* Grand écran : deux rangées de sept, pour laisser au mur toute sa hauteur. */
+/* Grand écran : deux rangées, de huit et de sept, pour laisser au mur toute sa hauteur. */
 @media (min-width: 1200px) {
-  .jeux { --par-rangee: 7; }
-  .jeu-nom { font-size: clamp(1rem, 1.4vw, 1.55rem); }
+  .jeux { --par-rangee: 8; }
+  .jeu { padding: 12px 14px; }
+  .jeu-nom { font-size: clamp(0.95rem, 1.25vw, 1.4rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {

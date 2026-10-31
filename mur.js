@@ -1136,6 +1136,83 @@ const SCENES = {
     nom(c, ['INSPECTEUR'], ['#e0b77d'], z);
     bandeau(c, 'TROIS HYPOTHESES. UN SEUL COUPABLE. ET TOUT LE MONDE A QUELQUE CHOSE A CACHER.     ', G.sur - 10, 1, '#e0b77d', 28, t);
   },
+
+  justone(c, t) {
+    const z = zones(['JUST ONE']);
+    // Le bleu du jeu, griffonné : des traits de feutre ondulent sur le fond.
+    c.fillStyle = '#1b37c9';
+    c.fillRect(0, 0, G.w, G.h);
+    c.fillStyle = '#2f52f5';
+    for (let y = 2; y < G.sur - 10; y += 6)
+      for (let x = 0; x < G.w; x++) if (Math.sin(x * 0.4 + y * 1.7 + t * 1.3) > 0.45) c.fillRect(x, y + Math.round(Math.sin(x * 0.4 + y) * 1.4), 1, 1);
+    // Trois tableaux : chacun écrit son indice, deux sont pareils, l'éponge les efface, et le mot se trouve avec ce qui reste.
+    const CARTES = [['CHAT', 'MIAOU', 'GRIFFES'], ['PIZZA', 'ITALIE', 'FOUR'], ['PLAGE', 'SABLE', 'MAILLOT'], ['BATMAN', 'GOTHAM', 'CAPE'], ['NOEL', 'SAPIN', 'RENNE'], ['LUNE', 'NUIT', 'MAREE']];
+    const FEUTRES = ['#e5262d', '#0b9a4f', '#8a2be2'];
+    const cycle = 5.4;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const [mot, pareil, seul] = CARTES[n % CARTES.length];
+    const indices = [pareil, seul, pareil];
+    // Sur un mur bas, on garde ce qui tient : les trois tableaux, les deux pareils, ou celui qui reste.
+    const enLigne = (z.aw - 4) / 3 >= 45;
+    const vus = enLigne || z.ah >= 23 ? [0, 1, 2] : z.ah >= 15 ? [0, 2] : [1];
+    const bw = enLigne ? Math.floor((z.aw - 4) / 3) : Math.min(z.aw, Math.max(46, Math.round(z.ah * 1.8)));
+    const bh = enLigne ? Math.min(z.ah, Math.round(bw * 0.6)) : Math.floor((z.ah - (vus.length - 1)) / vus.length);
+    const socle = bh >= 10 ? Math.max(2, Math.round(bh / 7)) : 0;
+    const e = Math.max(1, Math.min(Math.floor((bw - 3) / 42), Math.floor((bh - socle) / 7)));
+    const heros = vus.includes(1) ? 1 : vus[0];
+    vus.forEach((i, k) => {
+      const x = enLigne ? z.ax + k * (bw + 2) : Math.round(z.ax + (z.aw - bw) / 2);
+      const y = enLigne ? Math.round(z.ay + (z.ah - bh) / 2) : z.ay + k * (bh + 1);
+      const trouve = i === heros && p > 0.66;
+      c.fillStyle = '#000';
+      if (bh >= 10) c.fillRect(x + 1, y + 1, bw, bh);
+      c.fillStyle = trouve ? '#eaff3d' : '#fffefa';
+      c.fillRect(x, y, bw, bh);
+      c.fillStyle = FEUTRES[i];
+      if (socle) c.fillRect(x, y + bh - socle, bw, socle);
+      else c.fillRect(x, y, 2, bh);
+      const h = bh - socle;
+      const dx = socle ? 0 : 1;
+      const s = trouve ? mot : indices[i];
+      const wx = Math.round(x + dx + (bw - largeur(s, e)) / 2);
+      const wy = Math.round(y + (h - 7 * e) / 2);
+      // Chacun écrit à son tour, de gauche à droite.
+      const ecrit = Math.min(1, Math.max(0, (p - 0.02 - k * 0.09) / 0.12));
+      c.save();
+      c.beginPath();
+      c.rect(x, y, bw * (trouve ? 1 : ecrit), bh);
+      c.clip();
+      c.fillStyle = trouve ? '#14162b' : FEUTRES[i];
+      texte(c, s, wx, wy, e);
+      c.restore();
+      // L'éponge passe sur les deux pareils, et laisse une traînée.
+      if (i !== 1 && p > 0.38) {
+        const passe = Math.min(1, (p - 0.38 - k * 0.03) / 0.14);
+        if (passe > 0) {
+          const large = Math.round(bw * passe);
+          c.fillStyle = '#fffefa';
+          c.fillRect(x, y, large, h);
+          c.fillStyle = '#c9cce0';
+          for (let l = y + 1; l < y + h - 1; l += 2) c.fillRect(x + 2, l, Math.max(0, large - 4), 1);
+          if (passe < 1) {
+            c.fillStyle = '#14162b';
+            c.fillRect(x + large - 2, y, Math.max(3, e * 3), h);
+          }
+        }
+      }
+    });
+    // Le nom, comme le logo du jeu : « ONE » découpé dans un coup de surligneur.
+    const nx = Math.round(z.tx - largeur('JUST ONE', z.e) / 2);
+    const ny = Math.round(z.ty - 3.5 * z.e);
+    const debut = nx + 5 * 6 * z.e;
+    detoure(c, 'JUST', nx, ny, z.e, '#fff');
+    c.fillStyle = '#eaff3d';
+    c.fillRect(debut - z.e, ny - z.e, largeur('ONE', z.e) + 2 * z.e, 9 * z.e);
+    c.fillStyle = '#14162b';
+    texte(c, 'ONE', debut, ny, z.e);
+    bandeau(c, 'UN MOT A FAIRE DEVINER. UN INDICE CHACUN. SANS AVOIR LA MEME IDEE QUE LES AUTRES.     ', G.sur - 10, 1, '#eaff3d', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -1306,7 +1383,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -1381,7 +1458,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -1448,4 +1525,5 @@ function demarre() {
   'https://wavelength-hnfh.onrender.com/',
   'https://undercover-h60g.onrender.com/',
   'https://inspecteur.onrender.com/',
+  'https://just-one.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
