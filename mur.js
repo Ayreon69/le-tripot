@@ -1019,6 +1019,123 @@ const SCENES = {
     texte(c, 'COVER', debut, ny, z.e);
     bandeau(c, 'TOUT LE MONDE A LE MEME MOT. SAUF UN.     ', G.sur - 10, 1, '#86c440', 28, t);
   },
+
+  inspecteur(c, t) {
+    const z = zones(['INSPECTEUR']);
+    // Le sous-main vert, sous la lampe du bureau.
+    const lx = z.ax + z.aw / 2;
+    const ly = z.ay + z.ah / 2;
+    const lampe = c.createRadialGradient(lx, ly, 2, lx, ly, Math.max(z.aw, z.ah) * 0.75);
+    lampe.addColorStop(0, '#2f6145');
+    lampe.addColorStop(1, '#0a1711');
+    c.fillStyle = lampe;
+    c.fillRect(0, 0, G.w, G.h);
+    // Le dossier ouvert : une photo, des lignes tapées à la machine, une ligne caviardée.
+    const cycle = 5.2;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const dh = Math.round(z.ah * 0.9);
+    const dw = Math.round(Math.min(z.aw * 0.92, dh * 1.5));
+    const x0 = Math.round(z.ax + (z.aw - dw) / 2);
+    const y0 = Math.round(z.ay + (z.ah - dh) / 2);
+    const m = Math.max(1, Math.round(dw / 36));
+    c.fillStyle = '#000';
+    c.fillRect(x0 + 2, y0 + 2, dw, dh);
+    c.fillStyle = '#b48a50';
+    c.fillRect(x0, y0, dw, dh);
+    c.fillRect(x0 + 2, y0 - 2, Math.round(dw * 0.35), 2);
+    const px = x0 + m;
+    const py = y0 + m;
+    const pw = dw - 2 * m;
+    const ph = dh - 2 * m;
+    const photoW = Math.round(Math.min(pw * 0.34, ph * 0.62));
+    const photoH = Math.round(photoW * 1.2);
+    const pas = ph > 40 ? 4 : 3;
+    const lignes = (fond, encre, epais, cachee) => {
+      c.fillStyle = fond;
+      c.fillRect(px, py, pw, ph);
+      let i = 0;
+      for (let y = py + 2; y < py + ph - 1; y += pas, i++) {
+        const sous = y < py + 2 + photoH;
+        const x = sous ? px + photoW + 3 : px + 2;
+        const fin = Math.round((px + pw - 2 - x) * (0.62 + 0.38 * Math.abs(Math.sin(i * 2.7 + n * 1.3))));
+        c.fillStyle = cachee && i === 3 + (n % 2) ? '#120f0a' : encre;
+        c.fillRect(x, y, fin, cachee && i === 3 + (n % 2) ? 2 : epais);
+      }
+    };
+    lignes('#d9cfb3', '#4f4636', 1, true);
+    // Le suspect de la photo : son chapeau change d'un dossier à l'autre, jamais son visage, qu'on ne voit pas.
+    const fx = px + 2;
+    const fy = py + 2;
+    c.fillStyle = '#5a5140';
+    c.fillRect(fx, fy, photoW - 2, photoH - 2);
+    const tx = fx + (photoW - 2) / 2;
+    const tr = Math.max(1.5, photoW * 0.17);
+    const ty = fy + photoH * 0.4;
+    c.fillStyle = '#17130d';
+    c.beginPath();
+    c.arc(tx, ty, tr, 0, 7);
+    c.fill();
+    c.beginPath();
+    c.arc(tx, fy + photoH - 2, tr * 1.9, Math.PI, 2 * Math.PI);
+    c.fill();
+    if (n % 2) {
+      c.fillRect(Math.round(tx - tr * 1.6), Math.round(ty - tr * 0.8), Math.round(tr * 3.2), 1);
+      c.fillRect(Math.round(tx - tr * 0.9), Math.round(ty - tr * 1.7), Math.round(tr * 1.8), Math.round(tr));
+    }
+    // La loupe : sous elle, le papier s'éclaire et une empreinte apparaît, invisible à l'œil nu.
+    const R = Math.max(4, Math.round(Math.min(dw, dh) * 0.25));
+    const ox = px + pw * (0.58 + 0.28 * Math.sin(t * 0.9));
+    const oy = py + ph * (0.52 + 0.26 * Math.sin(t * 1.5 + 1));
+    const ex = px + pw * 0.74;
+    const ey = py + ph * 0.6;
+    c.save();
+    c.beginPath();
+    c.arc(ox, oy, R, 0, 7);
+    c.clip();
+    lignes('#fff9e8', '#2e281d', 2, false);
+    c.strokeStyle = '#f0301f';
+    c.lineWidth = 1;
+    for (let r = 1.5; r < R * 0.85; r += 3) {
+      c.beginPath();
+      c.ellipse(ex, ey, r * 0.72, r, 0.25, 0.3, 5.9);
+      c.stroke();
+    }
+    c.restore();
+    c.strokeStyle = '#2a1c10';
+    c.lineWidth = Math.max(1, Math.round(R / 7));
+    c.beginPath();
+    c.arc(ox, oy, R, 0, 7);
+    c.stroke();
+    c.lineWidth = Math.max(2, Math.round(R / 4));
+    c.beginPath();
+    c.moveTo(ox + R * 0.72, oy + R * 0.72);
+    c.lineTo(ox + R * 1.5, oy + R * 1.5);
+    c.stroke();
+    // Le tampon rouge tombe sur le dossier, et le fait trembler une seconde.
+    const MOTS = ['SUSPECT', 'ALIBI ?', 'MOBILE ?', 'AVEU ?'];
+    if (p > 0.6 && p < 0.96) {
+      const mot = MOTS[n % MOTS.length];
+      const se = Math.max(1, Math.min(Math.floor((dw - 8) / (8 * 6)), Math.floor((dh * 0.42) / 11)));
+      const chute = p < 0.64;
+      const e = se + (chute ? 1 : 0);
+      const tremble = p < 0.68 ? Math.round(Math.sin(t * 90)) : 0;
+      const sw = largeur(mot, e) + 6 * e;
+      const sh = 13 * e;
+      const sx = Math.round(x0 + (dw - sw) / 2) + tremble;
+      const sy = Math.round(y0 + (dh - sh) / 2);
+      c.fillStyle = 'rgba(217,207,179,.9)';
+      c.fillRect(sx, sy, sw, sh);
+      c.fillStyle = '#ff1f12';
+      c.fillRect(sx, sy, sw, e);
+      c.fillRect(sx, sy + sh - e, sw, e);
+      c.fillRect(sx, sy, e, sh);
+      c.fillRect(sx + sw - e, sy, e, sh);
+      texte(c, mot, sx + 3 * e, sy + 3 * e, e);
+    }
+    nom(c, ['INSPECTEUR'], ['#e0b77d'], z);
+    bandeau(c, 'TROIS HYPOTHESES. UN SEUL COUPABLE. ET TOUT LE MONDE A QUELQUE CHOSE A CACHER.     ', G.sur - 10, 1, '#e0b77d', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -1189,7 +1306,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -1264,7 +1381,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -1330,4 +1447,5 @@ function demarre() {
   'https://hanabi-2bap.onrender.com/',
   'https://wavelength-hnfh.onrender.com/',
   'https://undercover-h60g.onrender.com/',
+  'https://inspecteur.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
