@@ -1329,6 +1329,5 @@ function demarre() {
   'https://cockroach-poker-kksi.onrender.com/',
   'https://hanabi-2bap.onrender.com/',
   'https://wavelength-hnfh.onrender.com/',
-  // Adresse provisoire, à remplacer par celle du service Render d'Undercover.
-  'https://undercover.onrender.com/',
+  'https://undercover-h60g.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
