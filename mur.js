@@ -605,6 +605,239 @@ const SCENES = {
     nom(c, ['SKULL'], ['#efe6d2'], z);
     bandeau(c, 'TROIS FLEURS, UN CRANE. TU EN RETOURNES COMBIEN ?     ', G.sur - 10, 1, '#c792ff', 28, t);
   },
+
+  coup(c, t) {
+    c.fillStyle = '#0d1630';
+    c.fillRect(0, 0, G.w, G.h);
+    // Le velours damassé de la cour, et des ducats qui tombent.
+    c.fillStyle = 'rgba(217,178,95,.2)';
+    for (let y = 2; y < G.sur; y += 6) for (let x = (y % 12 ? 3 : 0); x < G.w; x += 6) c.fillRect(x, y, 1, 1);
+    for (let i = 0; i < 16; i++) {
+      const e = i % 3 ? 1 : 2;
+      c.fillStyle = i % 2 ? '#d9b25f' : '#f0d48a';
+      c.fillRect(Math.round((((i * 37) % 100) / 100) * G.w), Math.round(((t * (5 + (i % 5) * 2) + i * 53) % (G.sur + 10)) - 5), e, e);
+    }
+    const z = zones(['COUP']);
+    const cx = z.ax + z.aw / 2;
+    const cy = z.ay + z.ah / 2;
+    const h = Math.min(z.ah * 0.84, z.aw * 0.62);
+    const w = h * 0.7;
+    // Deux lettres scellées. On en conteste une : elle se retourne sur une couronne, ou sur le bluff.
+    const cycle = 3.6;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const echelle = p < 0.3 ? 1 : p < 0.4 ? 1 - (p - 0.3) / 0.1 : p < 0.5 ? (p - 0.4) / 0.1 : p < 0.85 ? 1 : p < 0.92 ? 1 - (p - 0.85) / 0.07 : (p - 0.92) / 0.08;
+    const montree = p >= 0.4 && p < 0.92;
+    const vrai = (n * 5 + 1) % 3 !== 0;
+    const lettre = (x, q, face) => {
+      const l = Math.max(1, Math.round(w * q));
+      const x0 = Math.round(x - l / 2);
+      const y0 = Math.round(cy - h / 2);
+      c.fillStyle = '#d9b25f';
+      c.fillRect(x0 - 1, y0 - 1, l + 2, Math.round(h) + 2);
+      c.fillStyle = face === 'bluff' ? '#7e1d12' : '#f3e8cc';
+      c.fillRect(x0, y0, l, Math.round(h));
+      if (face === 'dos') {
+        c.fillStyle = '#b8321f';
+        c.beginPath();
+        c.ellipse(x, cy, Math.max(1, l * 0.3), w * 0.3, 0, 0, 7);
+        c.fill();
+        c.fillStyle = '#7e1d12';
+        c.beginPath();
+        c.ellipse(x, cy, Math.max(0.5, l * 0.15), w * 0.15, 0, 0, 7);
+        c.fill();
+      } else if (face === 'vrai') {
+        const a = l * 0.32;
+        const b = h * 0.16;
+        c.fillStyle = '#9c7631';
+        c.beginPath();
+        c.moveTo(x - a, cy + b);
+        c.lineTo(x + a, cy + b);
+        c.lineTo(x + a, cy - b);
+        c.lineTo(x + a / 2, cy - b * 0.1);
+        c.lineTo(x, cy - b * 1.3);
+        c.lineTo(x - a / 2, cy - b * 0.1);
+        c.lineTo(x - a, cy - b);
+        c.fill();
+      } else {
+        c.strokeStyle = '#f3e8cc';
+        c.lineWidth = Math.max(1, l * 0.09);
+        c.beginPath();
+        c.moveTo(x - l * 0.26, cy - l * 0.26);
+        c.lineTo(x + l * 0.26, cy + l * 0.26);
+        c.moveTo(x + l * 0.26, cy - l * 0.26);
+        c.lineTo(x - l * 0.26, cy + l * 0.26);
+        c.stroke();
+      }
+    };
+    [-1, 1].forEach((k, i) => {
+      const visee = i === n % 2;
+      lettre(cx + k * w * 0.62, visee ? echelle : 1, visee && montree ? (vrai ? 'vrai' : 'bluff') : 'dos');
+    });
+    nom(c, ['COUP'], ['#f0d48a'], z);
+    bandeau(c, 'DEUX LETTRES SCELLEES, ET UNE COUR DE MENTEURS.     ', G.sur - 10, 1, '#d9b25f', 28, t);
+  },
+
+  cockroach(c, t) {
+    c.fillStyle = '#0f1a16';
+    c.fillRect(0, 0, G.w, G.h);
+    const z = zones(['COCKROACH', 'POKER']);
+    const cx = z.ax + z.aw / 2;
+    const cy = z.ay + z.ah / 2;
+    // Un cafard qui trottine : six pattes qui alternent, deux antennes.
+    const cafard = (x, y, s, a, pas) => {
+      c.save();
+      c.translate(x, y);
+      c.rotate(a);
+      c.strokeStyle = '#3d2412';
+      c.lineWidth = Math.max(1, s * 0.12);
+      for (const k of [-1, 0, 1]) {
+        const b = Math.sin(pas + k * 2.1) * s * 0.35;
+        c.beginPath();
+        c.moveTo(k * s * 0.45, 0);
+        c.lineTo(k * s * 0.45 + b, -s * 0.9);
+        c.moveTo(k * s * 0.45, 0);
+        c.lineTo(k * s * 0.45 - b, s * 0.9);
+        c.stroke();
+      }
+      c.beginPath();
+      c.moveTo(s * 1.1, -s * 0.15);
+      c.lineTo(s * 2, -s * 0.8);
+      c.moveTo(s * 1.1, s * 0.15);
+      c.lineTo(s * 2, s * 0.8);
+      c.stroke();
+      c.fillStyle = '#8a4b22';
+      c.beginPath();
+      c.ellipse(0, 0, s * 1.05, s * 0.55, 0, 0, 7);
+      c.fill();
+      c.fillStyle = '#4a2a12';
+      c.beginPath();
+      c.ellipse(s * 1.05, 0, s * 0.3, s * 0.32, 0, 0, 7);
+      c.fill();
+      c.fillRect(-s * 0.9, -0.5, s * 1.8, 1);
+      c.restore();
+    };
+    // Une planche face cachée : on annonce, elle se retourne, et ce n'était pas toujours un cafard.
+    const cycle = 3.4;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const echelle = p < 0.35 ? 1 : p < 0.45 ? 1 - (p - 0.35) / 0.1 : p < 0.55 ? (p - 0.45) / 0.1 : p < 0.88 ? 1 : p < 0.94 ? 1 - (p - 0.88) / 0.06 : (p - 0.94) / 0.06;
+    const face = p >= 0.45 && p < 0.94;
+    const h = Math.min(z.ah * 0.84, z.aw * 0.55);
+    const w = h * 0.7;
+    const l = Math.max(1, Math.round(w * echelle));
+    const x0 = Math.round(cx - l / 2);
+    const y0 = Math.round(cy - h / 2);
+    c.fillStyle = '#c9a24a';
+    c.fillRect(x0 - 1, y0 - 1, l + 2, Math.round(h) + 2);
+    c.fillStyle = face ? '#f1e6cc' : '#1d4a3a';
+    c.fillRect(x0, y0, l, Math.round(h));
+    if (!face) {
+      c.fillStyle = '#c9a24a';
+      c.beginPath();
+      c.ellipse(cx, cy, Math.max(1, l * 0.3), w * 0.18, 0, 0, 7);
+      c.fill();
+      c.fillStyle = '#1d4a3a';
+      c.beginPath();
+      c.arc(cx, cy, Math.max(1, Math.min(l, w) * 0.1), 0, 7);
+      c.fill();
+    } else if (n % 3 !== 1) {
+      cafard(cx, cy + h * 0.06, Math.max(2, Math.min(l, w) * 0.22), -Math.PI / 2, t * 4);
+    } else {
+      // Pas un cafard : un rat, tout en rondeurs.
+      const s = Math.max(2, Math.min(l, w) * 0.2);
+      c.fillStyle = '#6d6a72';
+      c.beginPath();
+      c.ellipse(cx, cy + s * 0.2, s * 0.9, s * 1.2, 0, 0, 7);
+      c.fill();
+      c.beginPath();
+      c.arc(cx, cy - s * 1.1, s * 0.6, 0, 7);
+      c.fill();
+      c.fillStyle = '#e7a9a3';
+      c.fillRect(Math.round(cx - s * 0.75), Math.round(cy - s * 1.75), Math.max(1, Math.round(s * 0.4)), Math.max(1, Math.round(s * 0.4)));
+      c.fillRect(Math.round(cx + s * 0.35), Math.round(cy - s * 1.75), Math.max(1, Math.round(s * 0.4)), Math.max(1, Math.round(s * 0.4)));
+      c.strokeStyle = '#e7a9a3';
+      c.beginPath();
+      c.moveTo(cx, cy + s * 1.3);
+      c.quadraticCurveTo(cx + s * 1.4, cy + s * 1.6, cx + s * 1.2, cy + s * 2.2);
+      c.stroke();
+    }
+    // Et ses cousins qui font le tour de la vitrine.
+    const tour = 2 * (z.aw + z.ah);
+    for (let i = 0; i < 3; i++) {
+      let d = (t * 14 + (i * tour) / 3) % tour;
+      let x, y, a;
+      if (d < z.aw) [x, y, a] = [z.ax + d, z.ay + 2, 0];
+      else if ((d -= z.aw) < z.ah) [x, y, a] = [z.ax + z.aw - 2, z.ay + d, Math.PI / 2];
+      else if ((d -= z.ah) < z.aw) [x, y, a] = [z.ax + z.aw - d, z.ay + z.ah - 2, Math.PI];
+      else [x, y, a] = [z.ax + 2, z.ay + z.ah - (d - z.aw), -Math.PI / 2];
+      cafard(x, y, Math.max(2, Math.round(z.ah * 0.03)), a, t * 16 + i);
+    }
+    nom(c, ['COCKROACH', 'POKER'], ['#efe6d0', '#c9a24a'], z);
+    bandeau(c, "C'EST UN CAFARD. OU PAS.     ", G.sur - 10, 1, '#c9a24a', 28, t);
+  },
+
+  hanabi(c, t) {
+    const ciel = c.createLinearGradient(0, 0, 0, G.sur);
+    ciel.addColorStop(0, '#060b24');
+    ciel.addColorStop(1, '#16235a');
+    c.fillStyle = ciel;
+    c.fillRect(0, 0, G.w, G.h);
+    const z = zones(['HANABI']);
+    // Le fleuve, en bas de la zone : chaque gerbe s'y reflète, en plus pâle.
+    const fleuve = Math.round(z.ay + z.ah * 0.82);
+    c.fillStyle = '#0a1438';
+    c.fillRect(z.ax, fleuve, z.aw, z.ay + z.ah - fleuve);
+    const COULEURS = ['#ff5b4d', '#ffd23a', '#4fd68a', '#5aa8ff', '#f4f2ec'];
+    c.globalCompositeOperation = 'lighter';
+    const R = Math.min(z.aw * 0.26, (fleuve - z.ay) * 0.46);
+    const gros = R > 14 ? 2 : 1;
+    for (let i = 0; i < 4; i++) {
+      const cycle = 2.4 + (i % 2) * 0.5;
+      const decale = t + i * 0.71;
+      const n = Math.floor(decale / cycle);
+      const p = (decale % cycle) / cycle;
+      const x = z.ax + z.aw * (0.18 + 0.21 * i) + Math.sin(n * 3.1 + i) * z.aw * 0.05;
+      const y = z.ay + R + (fleuve - z.ay - 2 * R) * (0.5 + 0.5 * Math.sin(n * 1.7 + i * 2));
+      const couleur = COULEURS[(n * 3 + i) % 5];
+      c.fillStyle = couleur;
+      if (p < 0.22) {
+        // La fusée monte depuis le fleuve.
+        const q = p / 0.22;
+        c.fillRect(Math.round(x), Math.round(fleuve - (fleuve - y) * q), gros, gros * 2);
+        continue;
+      }
+      const q = (p - 0.22) / 0.78;
+      // L'éclat du départ, puis les rais qui s'ouvrent, retombent et s'éteignent.
+      if (q < 0.12) {
+        c.fillStyle = '#fff6dc';
+        c.fillRect(Math.round(x - gros), Math.round(y - gros), gros * 3, gros * 3);
+        c.fillStyle = couleur;
+      }
+      const r = R * (1 - (1 - q) ** 3);
+      const chute = q * q * R * 0.35;
+      const rais = 18;
+      for (let k = 0; k < rais; k++) {
+        const a = (k / rais) * Math.PI * 2 + n;
+        for (let j = 0; j < 4; j++) {
+          const f = 1 - j * 0.14;
+          c.globalAlpha = Math.max(0, (1 - q * q) * (1 - j * 0.24));
+          const px = x + Math.cos(a) * r * f;
+          const py = y + Math.sin(a) * r * f + chute * f;
+          const e = j === 0 ? gros : 1;
+          c.fillRect(Math.round(px), Math.round(py), e, e);
+          if (j === 0 && py < fleuve) {
+            c.globalAlpha = Math.max(0, 0.4 - q * 0.4);
+            c.fillRect(Math.round(px), Math.round(2 * fleuve - py), 1, 1);
+          }
+        }
+      }
+      c.globalAlpha = 1;
+    }
+    c.globalCompositeOperation = 'source-over';
+    nom(c, ['HANABI'], ['#f4f2ec'], z);
+    bandeau(c, 'TU VOIS LES CARTES DE TOUS, SAUF LES TIENNES.     ', G.sur - 10, 1, '#ff6a52', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -760,6 +993,7 @@ function demarre() {
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
     ctx.setLineDash([]);
+    ctx.lineWidth = 1;
     SCENES[scene](ctx, t);
   };
 
@@ -769,7 +1003,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -844,7 +1078,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -905,4 +1139,7 @@ function demarre() {
   'https://perudo-f6x0.onrender.com/',
   'https://liar-game-nh9k.onrender.com/',
   'https://black-and-white-hn5n.onrender.com/',
+  'https://coup-nb7f.onrender.com/',
+  'https://cockroach-poker-kksi.onrender.com/',
+  'https://hanabi-2bap.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));

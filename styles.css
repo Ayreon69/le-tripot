@@ -47,26 +47,34 @@ main {
   background: linear-gradient(transparent, #050507 34px);
 }
 
+/* Rangées pleines, et la dernière centrée : onze jeux ne laissent pas de trou à gauche. */
 .jeux {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  --par-rangee: 3;
+  --ecart: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--ecart);
   max-width: 1320px;
   margin: 0 auto;
   padding: 34px 0 0;
   list-style: none;
 }
 
-/* Nombre de jeux impair : le dernier prend toute la largeur plutôt que de laisser un trou. */
-.jeux li:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.jeux li {
+  display: flex;
+  flex: 0 0 calc((100% - (var(--par-rangee) - 1) * var(--ecart)) / var(--par-rangee));
+  min-width: 0;
+}
 
 .jeu {
   position: relative;
   display: flex;
+  flex: 1;
   flex-direction: column;
   justify-content: center;
-  min-height: 76px;
-  padding: 8px 12px;
+  min-height: 64px;
+  padding: 8px 9px;
   overflow: hidden;
   border: 2px solid var(--b);
   border-radius: 10px;
@@ -78,10 +86,13 @@ main {
 
 .jeu-nom {
   font-family: 'Doto', 'Courier New', monospace;
-  font-size: 1.32rem;
+  font-size: 1.02rem;
   font-weight: 900;
   line-height: 1;
 }
+
+/* « Hi-Lo » ne se coupe pas au trait d'union. */
+.insecable { white-space: nowrap; }
 
 .jeu-info {
   margin-top: 5px;
@@ -139,6 +150,9 @@ main {
 .is-perudo { --c: #ff5fb0; --b: rgba(255, 95, 176, 0.55); }
 .is-liar { --c: #f2ead8; --b: rgba(242, 234, 216, 0.55); }
 .is-bw { --c: #ffffff; --b: rgba(255, 255, 255, 0.7); }
+.is-coup { --c: #8ea6ff; --b: rgba(142, 166, 255, 0.55); }
+.is-cockroach { --c: #4fd1a0; --b: rgba(79, 209, 160, 0.55); }
+.is-hanabi { --c: #d8f05a; --b: rgba(216, 240, 90, 0.55); }
 
 .note {
   max-width: 1320px;
@@ -150,12 +164,10 @@ main {
 
 @media (min-width: 760px) {
   main { padding: 0 24px max(12px, env(safe-area-inset-bottom)); }
-  /* Huit jeux sur une seule ligne déborderaient : deux rangées de quatre. */
   .jeux {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
+    --par-rangee: 4;
+    --ecart: 14px;
   }
-  .jeux li:last-child:nth-child(odd) { grid-column: auto; }
   .jeu {
     min-height: 96px;
     padding: 12px 18px;
@@ -163,6 +175,12 @@ main {
   .jeu-nom { font-size: clamp(1.05rem, 1.9vw, 1.9rem); }
   .jeu-info { font-size: 0.86rem; }
   .note { font-size: 0.76rem; margin-top: 10px; }
+}
+
+/* Grand écran : deux rangées, six puis cinq, pour laisser au mur toute sa hauteur. */
+@media (min-width: 1200px) {
+  .jeux { --par-rangee: 6; }
+  .jeu-nom { font-size: clamp(1.05rem, 1.6vw, 1.7rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
