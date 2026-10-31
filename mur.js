@@ -1853,5 +1853,5 @@ function demarre() {
   'https://inspecteur.onrender.com/',
   'https://just-one-3bg0.onrender.com/',
   'https://skyjo-zmtt.onrender.com/',
-  'https://trio.onrender.com/',
+  'https://trio-k6b5.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
