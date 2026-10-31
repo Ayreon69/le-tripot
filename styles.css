@@ -160,6 +160,7 @@ main {
 .is-skyjo { --c: #ee6bff; --b: rgba(238, 107, 255, 0.55); }
 .is-trio { --c: #22c7c4; --b: rgba(34, 199, 196, 0.55); }
 .is-citadelles { --c: #b45cff; --b: rgba(180, 92, 255, 0.55); }
+.is-avalon { --c: #ff8fa3; --b: rgba(255, 143, 163, 0.55); }
 
 .note {
   max-width: 1320px;
@@ -169,27 +170,33 @@ main {
   color: #8e8e99;
 }
 
+/* Très petit téléphone : « Cockroach » doit tenir dans son bouton. */
+@media (max-width: 359px) {
+  .jeu-nom { font-size: 0.84rem; }
+}
+
 @media (min-width: 760px) {
   main { padding: 0 24px max(12px, env(safe-area-inset-bottom)); }
-  /* Six par rangée : les dix-sept jeux tiennent en trois rangées (6, 6, et 5 au centre) et laissent de la hauteur au mur. */
+  /* Sept par rangée : les dix-neuf jeux tiennent en trois rangées (7, 7, et 5 au centre) et laissent de la hauteur au mur. */
   .jeux {
-    --par-rangee: 6;
+    --par-rangee: 7;
     --ecart: 14px;
   }
   .jeu {
     min-height: 96px;
-    padding: 12px 11px;
+    padding: 12px 8px;
   }
-  .jeu-nom { font-size: clamp(0.9rem, 1.75vw, 1.9rem); }
+  .jeu-nom { font-size: clamp(0.85rem, 1.75vw, 1.9rem); }
   .jeu-info { font-size: 0.8rem; }
   .note { font-size: 0.76rem; margin-top: 10px; }
 }
 
-/* Grand écran : deux rangées, de neuf et de huit, pour laisser au mur toute sa hauteur. */
-@media (min-width: 1200px) {
-  .jeux { --par-rangee: 9; }
-  .jeu { padding: 12px 14px; }
-  .jeu-nom { font-size: clamp(0.95rem, 1.25vw, 1.4rem); }
+/* Grand écran : deux rangées, de dix et de neuf, pour laisser au mur toute sa hauteur. */
+@media (min-width: 1280px) {
+  .jeux { --par-rangee: 10; }
+  .jeu { padding: 12px 10px; }
+  /* Les boutons ne grandissent plus au-delà de 1440 px (grille de 1320 px) : la police s'arrête avec eux. */
+  .jeu-nom { font-size: clamp(0.9rem, 1.1vw, 1.05rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {

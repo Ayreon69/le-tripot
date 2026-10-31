@@ -1630,6 +1630,113 @@ const SCENES = {
     nom(c, ['CITADELLES'], ['#ffd24a'], z);
     bandeau(c, 'UN PERSONNAGE SECRET, UNE CITE A BATIR, ET GARE A L ASSASSIN.     ', G.sur - 10, 1, '#ffc933', 28, t);
   },
+
+  avalon(c, t) {
+    const z = zones(['AVALON']);
+    // Le fond de la tapisserie : la laine rouge, et les fleurs semées qui respirent à peine.
+    c.fillStyle = '#7a2115';
+    c.fillRect(0, 0, G.w, G.h);
+    c.fillStyle = '#701d12';
+    for (let y = 0; y < G.sur - 11; y += 2) c.fillRect(0, y, G.w, 1);
+    const FLEURS = ['#f6e8c8', '#f3a899', '#f2c548', '#8fb0e2'];
+    const semis = Math.floor((G.w * (G.sur - 11)) / 90);
+    for (let i = 0; i < semis; i++) {
+      const x = (i * 37 + (i % 3) * 11) % G.w;
+      const y = (i * 53 + (i % 5) * 7) % (G.sur - 12);
+      c.fillStyle = '#3f7d58';
+      c.fillRect(x, y + 1, 1, 1);
+      c.globalAlpha = 0.6 + 0.3 * Math.sin(t * 0.8 + i);
+      c.fillStyle = FLEURS[i % 4];
+      c.fillRect(x, y, 1, 1);
+      c.globalAlpha = 1;
+    }
+    // Le dessin tient sur une grille de 48 sur 28, à l'échelle de la zone libre.
+    const u = Math.max(0.5, Math.min(z.aw / 48, z.ah / 28));
+    const ox = Math.round(z.ax + (z.aw - 48 * u) / 2);
+    const oy = Math.round(z.ay + z.ah - 28 * u);
+    const r = (x, y, w, h, couleur) => {
+      c.fillStyle = couleur;
+      const x0 = Math.round(x * u);
+      const y0 = Math.round(y * u);
+      c.fillRect(ox + x0, oy + y0, Math.max(1, Math.round((x + w) * u) - x0), Math.max(1, Math.round((y + h) * u) - y0));
+    };
+    // Chaque tour : Excalibur se plante, puis les deux écus se retournent. L'un est loyal, l'autre traître, et ils changent de place.
+    const cycle = 10;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    // L'île bleue, avec sa couture.
+    for (let y = 19; y < 28; y++) {
+      const hw = Math.round(23.5 * Math.sqrt(Math.max(0, 1 - ((y - 23.5) / 4.8) ** 2)));
+      r(24 - hw, y, 2 * hw, 1, '#1f4e96');
+      if (y > 19 && y < 27 && y % 2) {
+        r(24 - hw + 2, y, 1, 1, '#fff6df');
+        r(24 + hw - 3, y, 1, 1, '#fff6df');
+      }
+    }
+    r(17, 26, 1, 1, '#f3a899');
+    r(31, 25, 1, 1, '#f6e8c8');
+    r(24, 26, 1, 1, '#f2c548');
+    // La pierre.
+    r(19, 18, 10, 1, '#cfc5b1');
+    r(17, 19, 14, 2, '#cfc5b1');
+    r(16, 21, 16, 3, '#a89c88');
+    r(17, 24, 14, 1, '#7b7060');
+    // L'épée tombe du haut du mur et se fiche dans la pierre.
+    const chute = Math.min(1, p / 0.1);
+    const d = Math.round((1 - chute * chute) * 24);
+    if (chute > 0) {
+      r(22.5, 5 - d, 3, 14, '#e6e9ee');
+      r(24, 5 - d, 1, 14, '#9aa2ad');
+      r(23, 1 - d, 2, 3, '#6e1a12');
+      r(18, 4 - d, 12, 2, '#f0bd45');
+      r(22, -1 - d, 4, 2, '#f0bd45');
+      r(23.5, -1 - d, 1, 1, '#c63f2d');
+    }
+    // Le choc sur la pierre, puis un reflet qui descend le long de la lame.
+    if (p > 0.1 && p < 0.17) {
+      const q = (p - 0.1) / 0.07;
+      for (let k = 0; k < 8; k++) {
+        const a = Math.PI + (k * Math.PI) / 7;
+        r(24 + Math.cos(a) * q * 12, 18 + Math.sin(a) * q * 6, 1, 1, '#fff4c2');
+      }
+    }
+    if (p > 0.2 && p < 0.34) r(22.5, 5 + ((p - 0.2) / 0.14) * 12, 1, 2, '#ffffff');
+    // Les deux écus : même revers vert pour tous, on ne sait qu'au dernier moment qui est qui.
+    const ecu = (cx, debut, loyal) => {
+      const q = (p - debut) / 0.06;
+      const fin = (p - 0.9) / 0.06;
+      const montre = (q >= 0.5 && fin < 0.5);
+      const plat = Math.max(0.1, Math.abs(Math.cos(Math.PI * Math.max(0, Math.min(1, q)))) * Math.abs(Math.cos(Math.PI * Math.max(0, Math.min(1, fin)))));
+      const bord = !montre ? '#1f463e' : loyal ? '#f0bd45' : '#c63f2d';
+      const champ = !montre ? '#2f7a5c' : loyal ? '#1f4e96' : '#1b1714';
+      const LARGEURS = [11, 11, 11, 11, 11, 11, 11, 9, 9, 7, 5, 3];
+      LARGEURS.forEach((w, i) => {
+        const l = Math.max(1, w * plat);
+        r(cx - l / 2, 14 + i, l, 1, i === 0 || i === LARGEURS.length - 1 ? bord : champ);
+        if (l >= 2 && i > 0) {
+          r(cx - l / 2, 14 + i, 1, 1, bord);
+          r(cx + l / 2 - 1, 14 + i, 1, 1, bord);
+        }
+      });
+      if (plat < 0.6) return;
+      if (!montre) {
+        r(cx - 1, 17, 2, 2, '#fff6df');
+        r(cx - 0.5, 17.5, 1, 1, '#f2c548');
+      } else if (loyal) {
+        r(cx - 0.5, 16, 1, 6, '#f0bd45');
+        r(cx - 2.5, 18, 5, 1, '#f0bd45');
+      } else {
+        r(cx - 0.5, 16, 1, 5, '#e6e9ee');
+        r(cx - 2, 20, 4, 1, '#f0bd45');
+        r(cx - 0.5, 21, 1, 2, '#7a4a2a');
+      }
+    };
+    const gauche = n % 2 === 0;
+    ecu(9, 0.42, gauche);
+    ecu(39, 0.56, !gauche);
+    nom(c, ['AVALON'], ['#f8db7d'], z);
+    bandeau(c, 'LOYAUX OU SBIRES ? COMPOSE L EQUIPE, VOTE EN SECRET, ET DEMASQUE LE TRAITRE.     ', G.sur - 10, 1, '#ff8fa3', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -1800,7 +1907,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -1876,7 +1983,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -1947,4 +2054,5 @@ function demarre() {
   'https://skyjo-zmtt.onrender.com/',
   'https://trio-k6b5.onrender.com/',
   'https://citadelles-59hy.onrender.com/',
+  'https://avalon-f9o2.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
