@@ -1826,7 +1826,8 @@ function demarre() {
     ca.globalCompositeOperation = 'lighter';
     for (let i = ondes.length - 1; i >= 0; i--) {
       const o = ondes[i];
-      const age = (now - o.t) / 1000;
+      // L'heure de l'image peut précéder celle du geste : l'âge ne descend jamais sous zéro.
+      const age = Math.max(0, (now - o.t) / 1000);
       if (age > 0.9) {
         ondes.splice(i, 1);
         continue;
