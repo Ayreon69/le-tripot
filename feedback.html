@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Feedback · akhis-games</title>
+  <meta name="description" content="Propose une amélioration ou un changement pour un de nos jeux.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#050507">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Doto:wght@700;900&family=Familjen+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="feedback.css">
+</head>
+<body class="page-feedback">
+  <main class="fb">
+    <a class="fb-retour" id="retour" href="https://akhis-games.onrender.com">← <span id="retour-nom">Tous les jeux</span></a>
+
+    <form class="fb-carte" id="formulaire" novalidate>
+      <p class="fb-sur">Feedback</p>
+      <h1 class="fb-titre" id="titre">Une idée pour nos jeux&nbsp;?</h1>
+
+      <div class="fb-champ" id="champ-jeu" hidden>
+        <label for="jeu">Le jeu</label>
+        <select id="jeu" name="jeu"></select>
+      </div>
+
+      <div class="fb-champ">
+        <label for="message">Ce que tu changerais ou ajouterais</label>
+        <textarea id="message" name="message" rows="6" maxlength="1500" required placeholder="Une règle, un bug, une idée de mode…"></textarea>
+      </div>
+
+      <div class="fb-champ">
+        <label for="pseudo">Ton pseudo <span class="fb-facultatif">facultatif</span></label>
+        <input id="pseudo" name="pseudo" maxlength="30" autocomplete="nickname">
+      </div>
+
+      <!-- Invisible pour les joueurs : seuls les robots le remplissent. -->
+      <div class="fb-piege" aria-hidden="true">
+        <label for="site">Site</label>
+        <input id="site" name="site" tabindex="-1" autocomplete="off">
+      </div>
+
+      <button class="fb-envoyer" id="envoyer" type="submit">Envoyer</button>
+      <p class="fb-etat" id="etat" role="status"></p>
+    </form>
+
+    <section class="fb-carte fb-merci" id="merci" hidden tabindex="-1">
+      <p class="fb-sur">Bien reçu</p>
+      <h1 class="fb-titre">Merci&nbsp;!</h1>
+      <p>Ton feedback est arrivé. On lit tout, puis on choisit ce qu'on ajoute.</p>
+      <div class="fb-actions">
+        <a class="fb-envoyer" id="merci-retour" href="https://akhis-games.onrender.com">Tous les jeux</a>
+        <button class="fb-autre" id="autre" type="button">En envoyer un autre</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="feedback.js"></script>
+</body>
+</html>

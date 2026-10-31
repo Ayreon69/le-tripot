@@ -12,6 +12,15 @@ Une simple page statique, sans étape de build : **https://akhis-games.onrender.
    - l'ajouter à `PROGRAMME` et à `COULEURS` ;
    - ajouter l'adresse de son serveur dans la liste de réveil, en bas du fichier.
 
+4. Dans le jeu, sur l'accueil, à côté de « Tous les jeux », ajouter le lien `https://akhis-games.onrender.com/feedback.html?jeu=mon-jeu`, où `mon-jeu` est sa classe sans `is-`.
+
+## Feedback
+
+Le lien « Feedback » de chaque jeu ouvre `feedback.html`, qui prend le nom et la couleur du jeu dans `index.html` et `styles.css`.
+Le formulaire envoie au service `feedback-serveur/` (Render, `akhis-feedback`), qui poste sur Discord par le webhook de sa variable `DISCORD_WEBHOOK_FEEDBACK`. `discord/recuperer.mjs` les ramène ensuite dans `RETOURS.md`.
+
+Le service n'a aucune dépendance. Pour le tester : `node --test feedback-serveur/serveur.test.mjs`. En local, `FEEDBACK_LOCAL=1` l'ouvre aux pages de `localhost`.
+
 ## Essayer en local
 
 ```bash

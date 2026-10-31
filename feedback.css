@@ -1,0 +1,140 @@
+/* La page Feedback : la couleur --c vient du jeu d'où l'on arrive (.is-mon-jeu dans styles.css). */
+
+:root {
+  --c: #ff5fb0;
+  --b: rgba(255, 95, 176, 0.55);
+}
+
+.page-feedback {
+  min-height: 100dvh;
+  overflow: auto;
+  background-color: #050507;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.4px);
+  background-size: 9px 9px;
+  color: #f4f1ea;
+  font-family: "Familjen Grotesk", sans-serif;
+}
+
+/* styles.css fixe le main du launcher en bas de l'écran : ici, la page doit pouvoir défiler. */
+.fb {
+  position: static;
+  background: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(520px, 100%);
+  margin: 0 auto;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+}
+
+.fb-retour {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  color: var(--c);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.fb-retour:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.fb-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px 20px;
+  border: 1px solid var(--b);
+  border-radius: 14px;
+  background: #0d0d11;
+}
+.fb-carte:focus { outline: none; }
+.fb-carte[hidden] { display: none; }
+
+.fb-sur {
+  margin: 0;
+  color: var(--c);
+  font-family: "Doto", monospace;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.fb-titre {
+  margin: -10px 0 0;
+  font-family: "Doto", monospace;
+  font-size: clamp(30px, 8.5vw, 42px);
+  font-weight: 900;
+  line-height: 1.04;
+  overflow-wrap: anywhere;
+}
+
+.fb-merci p:not(.fb-sur) { margin: 0; color: #bdb9b0; font-size: 16px; line-height: 1.45; }
+
+.fb-champ { display: flex; flex-direction: column; gap: 6px; }
+.fb-champ[hidden] { display: none; }
+.fb-champ label { font-size: 15px; font-weight: 600; }
+.fb-facultatif { color: #8f8b83; font-weight: 500; }
+
+.fb-champ textarea,
+.fb-champ input,
+.fb-champ select {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 12px;
+  border: 1px solid #39383f;
+  border-radius: 10px;
+  background: #050507;
+  color: inherit;
+  font: inherit;
+  font-size: 16px;
+}
+.fb-champ textarea { resize: vertical; line-height: 1.4; }
+.fb-champ ::placeholder { color: #77736c; }
+.fb-champ :focus-visible,
+.fb-envoyer:focus-visible,
+.fb-autre:focus-visible,
+.fb-retour:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
+
+.fb-piege { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.fb-envoyer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--c);
+  color: #050507;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.fb-envoyer:hover { filter: brightness(1.1); }
+.fb-envoyer:disabled { cursor: default; opacity: 0.6; }
+
+.fb-etat { min-height: 1.4em; margin: -6px 0 0; color: #bdb9b0; font-size: 15px; line-height: 1.4; }
+.fb-etat.is-erreur { color: #ff8d8d; }
+
+.fb-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.fb-actions > * { flex: 1 1 180px; }
+.fb-autre {
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid #39383f;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fb-autre:hover { border-color: var(--c); }
