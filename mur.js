@@ -1213,6 +1213,168 @@ const SCENES = {
     texte(c, 'ONE', debut, ny, z.e);
     bandeau(c, 'UN MOT A FAIRE DEVINER. UN INDICE CHACUN. SANS AVOIR LA MEME IDEE QUE LES AUTRES.     ', G.sur - 10, 1, '#eaff3d', 28, t);
   },
+
+  skyjo(c, t) {
+    let z = zones(['SKYJO']);
+    // Sur téléphone, le nom rapetisse d'un cran pour que les cartes gardent leurs chiffres.
+    if (!G.paysage && z.e >= 3) {
+      const e = z.e - 1;
+      z = { ...z, e, ah: Math.max(6, z.bas - z.ay - 9 * e - 3), ty: z.bas - 4.5 * e };
+    }
+    // Le ciel des années 70 : des bandes, du violet de la nuit à l'orange du soir.
+    c.fillStyle = '#120d2a';
+    c.fillRect(0, 0, G.w, G.h);
+    const BANDES = ['#1b1440', '#251a4d', '#33215f', '#4a2268', '#6e2a72', '#8a2f78', '#b8407a', '#d9536a', '#f2704f'];
+    const hb = G.sur / BANDES.length;
+    BANDES.forEach((b, i) => {
+      c.fillStyle = b;
+      c.fillRect(0, Math.round(i * hb), G.w, Math.ceil(hb) + 1);
+    });
+    // La grille de douze cartes, 3 rangées de 4, au milieu de la zone du dessin.
+    const g = z.ah >= 40 && z.aw >= 70 ? 2 : 1;
+    const cw = Math.max(5, Math.floor(Math.min((z.aw * 0.9 - 3 * g) / 4, (z.ah - 2 - 2 * g) / 3 / 1.38)));
+    const ch = Math.round(cw * 1.38);
+    const gx = Math.round(z.ax + (z.aw - (4 * cw + 3 * g)) / 2);
+    const gy = Math.round(z.ay + (z.ah - (3 * ch + 2 * g)) / 2);
+    // Derrière, le gros soleil rayé : plein en haut, coupé de bandes de plus en plus larges en bas.
+    const cx = gx + (4 * cw + 3 * g) / 2;
+    const cy = gy + (3 * ch + 2 * g) * 0.42;
+    const R = Math.min(z.aw * 0.5, (3 * ch + 2 * g) * 0.78);
+    for (let y = Math.ceil(cy - R); y <= cy + R; y++) {
+      const d = y - cy;
+      if (d > 0 && (d % 6) < 1 + (d / R) * 4) continue;
+      const l = Math.sqrt(Math.max(0, R * R - d * d));
+      const k = (y - (cy - R)) / (2 * R);
+      c.fillStyle = k < 0.45 ? '#ffd36b' : k < 0.62 ? '#ffc23d' : k < 0.78 ? '#ff9a4d' : '#f2704f';
+      c.fillRect(Math.round(cx - l), y, Math.round(2 * l), 1);
+    }
+    // La table de nuit sous la grille, pour que chaque couleur de carte ressorte sur le soleil.
+    const marge = g + 1;
+    c.fillStyle = 'rgba(18,13,42,.85)';
+    c.fillRect(gx - marge + 1, gy - marge, 4 * cw + 3 * g + 2 * marge - 2, 3 * ch + 2 * g + 2 * marge);
+    c.fillRect(gx - marge, gy - marge + 1, 4 * cw + 3 * g + 2 * marge, 3 * ch + 2 * g + 2 * marge - 2);
+    // Chaque manche : les cartes se retournent une à une, une colonne de trois pareilles s'envole, puis on redistribue.
+    const cycle = 6.4;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const PAREILLES = [7, 12, 0, 5, -2, 10, 3];
+    const col = (n * 3 + 1) % 4;
+    const triple = PAREILLES[n % PAREILLES.length];
+    const valeurs = Array.from({ length: 12 }, (_, i) => (i % 4 === col ? triple : ((i * 7 + n * 5 + ((i * i) % 5)) % 15) - 2));
+    // Pas de seconde colonne pareille par hasard.
+    for (let k = 0; k < 4; k++) if (k !== col && valeurs[k] === valeurs[k + 4] && valeurs[k] === valeurs[k + 8]) valeurs[k + 8] = (valeurs[k + 8] + 3) % 13;
+    const autres = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].filter((i) => i % 4 !== col).sort((a, b) => ((a * 5 + n) % 7) - ((b * 5 + n) % 7) || a - b);
+    const ordre = [...autres];
+    [col, col + 8, col + 4].forEach((i, k) => ordre.splice(3 + k * 4, 0, i));
+    const TEINTES = (v) => (v <= -2 ? ['#5a55d8', '#2c2a85', '#ffffff'] : v < 0 ? ['#8191ff', '#4a5bd0', '#ffffff'] : v === 0 ? ['#7ad8f6', '#22a3d6', '#0d2b4c'] : v <= 4 ? ['#6ed892', '#2fa45c', '#0f3a1f'] : v <= 8 ? ['#ffe07a', '#ffb52e', '#5a2c00'] : ['#ff7d6a', '#d9352b', '#4a0a06']);
+    const DOS = ['#2a1d5c', '#4a2268', '#8a2f78', '#c9457a', '#f2704f', '#ffb347'];
+    // L'étiquette tassée : un 1 et un moins plus étroits, pour que « 12 » ou « −2 » tiennent sur une petite carte.
+    const etiquette = (s, x, y, ex, ey) => {
+      for (const ch of s) {
+        if (ch === '-') {
+          c.fillRect(x, y + 3 * ey, 3 * ex, ey);
+          x += 4 * ex;
+          continue;
+        }
+        const gl = POLICE[ch];
+        const g0 = ch === '1' ? 1 : 0;
+        const lg = ch === '1' ? 3 : 5;
+        for (let r = 0; r < 7; r++) for (let b = g0; b < g0 + lg; b++) if ((gl[r] >> (4 - b)) & 1) c.fillRect(x + (b - g0) * ex, y + r * ey, ex, ey);
+        x += (lg + 1) * ex;
+      }
+    };
+    const large = (s) => [...s].reduce((a, ch) => a + (ch === '-' || ch === '1' ? 4 : 6), -1);
+    const carte = (x, y, w, h, v) => {
+      if (w < 1) return;
+      const coins = (dx, dy, ww, hh) => {
+        c.fillRect(x + dx + 1, y + dy, ww - 2, hh);
+        c.fillRect(x + dx, y + dy + 1, ww, hh - 2);
+      };
+      c.fillStyle = 'rgba(10,5,30,.55)';
+      coins(1, 1, w, h);
+      if (v === null) {
+        // Le dos : le coucher de soleil rayé, et le soleil s'il y a la place.
+        DOS.forEach((k, i) => {
+          const bord = i === 0 || i === DOS.length - 1 ? 1 : 0;
+          const y0 = Math.round((i * h) / DOS.length);
+          const y1 = Math.round(((i + 1) * h) / DOS.length);
+          c.fillStyle = k;
+          c.fillRect(x + bord, y + y0, w - 2 * bord, y1 - y0);
+        });
+        if (w >= 9) {
+          c.fillStyle = '#ffd36b';
+          c.beginPath();
+          c.arc(x + w / 2, y + h * 0.56, Math.max(1, Math.round(w * 0.2)), 0, Math.PI * 2);
+          c.fill();
+        }
+        return;
+      }
+      const [clair, fonce, encre] = TEINTES(v);
+      c.fillStyle = fonce;
+      coins(0, 0, w, h);
+      if (w >= 5) {
+        c.fillStyle = clair;
+        c.fillRect(x + 1, y + 1, w - 2, h - 2);
+      }
+      // Les chiffres doublent sur une grande carte ; « 12 » ou « −2 » s'étirent seulement en hauteur s'ils manquent de largeur.
+      const s = String(v);
+      const ey = h >= 18 ? 2 : 1;
+      const ex = ey === 2 && large(s) * 2 <= w - 4 ? 2 : 1;
+      if (large(s) * ex <= w - 2 && h >= 9) {
+        c.fillStyle = encre;
+        etiquette(s, Math.round(x + (w - large(s) * ex) / 2), Math.round(y + (h - 7 * ey) / 2), ex, ey);
+      }
+    };
+    const vol = Math.max(0, Math.min(1, (p - 0.66) / 0.2));
+    const retour = Math.max(0, Math.min(1, (p - 0.9) / 0.08));
+    for (let i = 0; i < 12; i++) {
+      const x = gx + (i % 4) * (cw + g);
+      let y = gy + Math.floor(i / 4) * (ch + g);
+      const dans = i % 4 === col;
+      let q = Math.max(0, Math.min(1, (p - (0.04 + ordre.indexOf(i) * 0.045)) / 0.035));
+      // La colonne s'envole puis revient face cachée avec la nouvelle donne ; les autres se recachent en vague.
+      if (dans && vol > 0) {
+        if (retour > 0) {
+          c.globalAlpha = retour;
+          carte(x, y, cw, ch, null);
+          c.globalAlpha = 1;
+          continue;
+        }
+        y -= Math.round(vol * vol * (gy + 3 * ch + 2 * g + 4));
+        c.fillStyle = '#fff3d6';
+        for (let k = 0; k < 3; k++) if (Math.sin(t * 40 + i * 3 + k * 2.1) > 0.2) c.fillRect(x + ((i * 5 + k * 3) % cw), y + ch + 2 + k * 2, 1, 1);
+      } else if (!dans && retour > 0) {
+        q = 1 - Math.max(0, Math.min(1, (retour * 1.4 - (i % 4) * 0.12) / 0.4));
+      }
+      const ww = Math.round(cw * Math.abs(Math.cos(Math.PI * q)));
+      carte(x + Math.round((cw - ww) / 2), y, ww, ch, q > 0.5 ? valeurs[i] : null);
+      // La colonne complète s'illumine juste avant de partir.
+      if (dans && p > 0.57 && vol === 0 && Math.sin(t * 18) > -0.2) {
+        c.fillStyle = '#fff3d6';
+        c.fillRect(x - 1, y - 1, cw + 2, 1);
+        c.fillRect(x - 1, y + ch, cw + 2, 1);
+        c.fillRect(x - 1, y, 1, ch);
+        c.fillRect(x + cw, y, 1, ch);
+      }
+    }
+    // Le nom, comme le logo : des lettres de couleur qui dansent, avec leur ombre magenta.
+    const NOM = 'SKYJO';
+    const LETTRES = ['#ffd36b', '#fff3d6', '#8fe0ff', '#fff3d6', '#9ff0b9'];
+    const nx = Math.round(z.tx - largeur(NOM, z.e) / 2);
+    const ny = Math.round(z.ty - 3.5 * z.e);
+    const o = Math.max(1, Math.round(z.e / 3));
+    [...NOM].forEach((l, i) => {
+      const x = nx + i * 6 * z.e;
+      const y = ny + Math.round(Math.sin(t * 2.2 + i * 1.3) * z.e * 0.5);
+      c.fillStyle = '#2a1648';
+      texte(c, l, x + 2 * o, y + 2 * o, z.e);
+      c.fillStyle = '#b8407a';
+      texte(c, l, x + o, y + o, z.e);
+      c.fillStyle = LETTRES[i];
+      texte(c, l, x, y, z.e);
+    });
+    bandeau(c, 'RETOURNE, ECHANGE, ET FINIS AVEC LE MOINS DE POINTS.     ', G.sur - 10, 1, '#ffc23d', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -1383,7 +1545,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -1458,7 +1620,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -1526,4 +1688,5 @@ function demarre() {
   'https://undercover-h60g.onrender.com/',
   'https://inspecteur.onrender.com/',
   'https://just-one.onrender.com/',
+  'https://skyjo.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
