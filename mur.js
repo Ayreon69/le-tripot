@@ -1687,6 +1687,6 @@ function demarre() {
   'https://wavelength-hnfh.onrender.com/',
   'https://undercover-h60g.onrender.com/',
   'https://inspecteur.onrender.com/',
-  'https://just-one.onrender.com/',
+  'https://just-one-3bg0.onrender.com/',
   'https://skyjo.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
