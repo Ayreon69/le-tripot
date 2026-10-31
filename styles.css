@@ -154,6 +154,7 @@ main {
 .is-cockroach { --c: #4fd1a0; --b: rgba(79, 209, 160, 0.55); }
 .is-hanabi { --c: #d8f05a; --b: rgba(216, 240, 90, 0.55); }
 .is-wavelength { --c: #ff8a2b; --b: rgba(255, 138, 43, 0.55); }
+.is-undercover { --c: #66e04f; --b: rgba(102, 224, 79, 0.55); }
 
 .note {
   max-width: 1320px;
@@ -165,8 +166,9 @@ main {
 
 @media (min-width: 760px) {
   main { padding: 0 24px max(12px, env(safe-area-inset-bottom)); }
+  /* Cinq par rangée : les treize jeux tiennent en trois rangées et laissent de la hauteur au mur. */
   .jeux {
-    --par-rangee: 4;
+    --par-rangee: 5;
     --ecart: 14px;
   }
   .jeu {
@@ -178,10 +180,10 @@ main {
   .note { font-size: 0.76rem; margin-top: 10px; }
 }
 
-/* Grand écran : deux rangées de six, pour laisser au mur toute sa hauteur. */
+/* Grand écran : deux rangées, sept puis six, pour laisser au mur toute sa hauteur. */
 @media (min-width: 1200px) {
-  .jeux { --par-rangee: 6; }
-  .jeu-nom { font-size: clamp(1.05rem, 1.6vw, 1.7rem); }
+  .jeux { --par-rangee: 7; }
+  .jeu-nom { font-size: clamp(1rem, 1.4vw, 1.55rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {

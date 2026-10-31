@@ -61,9 +61,10 @@ function zones(lignes) {
     const e = Math.max(1, Math.min(Math.floor((lt - 6) / (plus * 6)), Math.floor((bas - haut) / (lignes.length * 9))));
     return { ax: 3, ay: haut, aw: Math.floor(G.w * 0.48), ah: bas - haut, tx: Math.floor(G.w * 0.74), ty: Math.floor((haut + bas) / 2), e, bas };
   }
-  const e = Math.max(1, Math.floor((G.w - 4) / (plus * 6)));
+  // Sur un mur bas (téléphone court, beaucoup de jeux), le nom rapetisse pour laisser de la place au dessin.
+  const e = Math.max(1, Math.min(Math.floor((G.w - 4) / (plus * 6)), Math.floor(((bas - haut) * 0.6) / (lignes.length * 9))));
   const th = lignes.length * 9 * e;
-  return { ax: 2, ay: haut, aw: G.w - 4, ah: bas - haut - th - 3, tx: Math.floor(G.w / 2), ty: bas - th / 2, e, bas };
+  return { ax: 2, ay: haut, aw: G.w - 4, ah: Math.max(6, bas - haut - th - 3), tx: Math.floor(G.w / 2), ty: bas - th / 2, e, bas };
 }
 
 function nom(c, lignes, couleurs, z) {
@@ -947,6 +948,77 @@ const SCENES = {
     nom(c, ['WAVELENGTH'], ['#ff8a2b'], z);
     bandeau(c, 'UN INDICE, UN CADRAN, ET TOUTE LA TABLE QUI DEBAT.     ', G.sur - 10, 1, '#ffcb3d', 28, t);
   },
+
+  undercover(c, t) {
+    c.fillStyle = '#0b1009';
+    c.fillRect(0, 0, G.w, G.h);
+    // La façade d'un immeuble de bureaux, la nuit : des fenêtres s'allument, quelqu'un guette.
+    const pas = G.paysage ? 7 : 6;
+    for (let y = 1; y < G.sur - 10; y += pas)
+      for (let x = 1; x < G.w; x += pas) {
+        const k = x * 7.13 + y * 3.71;
+        const s = Math.sin(k * 1.3 + Math.floor(t / 2.2 + (Math.sin(k) + 1) * 3) * 2.1);
+        c.fillStyle = s > 0.82 ? '#5d8a2c' : s > 0.3 ? '#1d2914' : '#141c0e';
+        c.fillRect(x, y, pas - 3, pas - 2);
+      }
+    const z = zones(['UNDERCOVER']);
+    // Une fiche « ton mot » caviardée : la barre glisse, on lit le mot des civils, puis il se brouille en celui de l'undercover.
+    const PAIRES = [['FONDUE', 'RACLETTE'], ['PLAGE', 'PISCINE'], ['TRAIN', 'METRO'], ['CHAT', 'TIGRE'], ['CAFE', 'THE'], ['SKI', 'LUGE'], ['PIZZA', 'QUICHE']];
+    const cycle = 4.4;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const [civil, intrus] = PAIRES[n % PAIRES.length];
+    const cw = Math.round(Math.min(z.aw * 0.88, z.ah * 2.6));
+    const ch = Math.round(Math.min(z.ah * 0.72, cw * 0.5));
+    const x0 = Math.round(z.ax + (z.aw - cw) / 2);
+    const y0 = Math.round(z.ay + (z.ah - ch) / 2);
+    c.fillStyle = '#000';
+    c.fillRect(x0 + 2, y0 + 2, cw, ch);
+    c.fillStyle = '#f5f0df';
+    c.fillRect(x0, y0, cw, ch);
+    const etiquette = cw > 50 ? 9 : 2;
+    if (etiquette > 2) {
+      c.fillStyle = '#7b7866';
+      texte(c, 'TON MOT', x0 + 3, y0 + 2, 1);
+    }
+    // Le masque, au coin de la fiche : il rougit quand le mot change.
+    const ms = cw > 120 ? 2 : 1;
+    c.fillStyle = p > 0.5 && p < 0.82 ? '#e5432a' : '#12150f';
+    enseigne(c, [0, 62, 127, 73, 127, 54, 0], x0 + cw - 9 * ms, y0 + 1, ms);
+    const mot = p < 0.52 ? civil : intrus;
+    const e = Math.max(1, Math.min(Math.floor((cw - 8) / (Math.max(civil.length, intrus.length) * 6)), Math.floor((ch - etiquette - 4) / 9)));
+    const wy = Math.round(y0 + etiquette + (ch - etiquette - 7 * e) / 2);
+    const wx = Math.round(x0 + (cw - largeur(mot, e)) / 2);
+    c.fillStyle = p < 0.52 ? '#12150f' : '#e5432a';
+    texte(c, mot, wx, wy, e);
+    // Le brouillage entre les deux mots.
+    if (p > 0.46 && p < 0.58) {
+      for (let i = 0; i < 40; i++) {
+        const h = Math.sin(i * 12.9898 + Math.floor(t * 18) * 78.233) * 43758.5;
+        const r = h - Math.floor(h);
+        c.fillStyle = i % 3 ? '#12150f' : i % 2 ? '#e5432a' : '#86c440';
+        c.fillRect(Math.round(x0 + 3 + r * (cw - 6 - e)), Math.round(wy - e + ((r * 97) % 1) * 8 * e), e, e);
+      }
+    }
+    // La barre noire : elle cache tout, s'ouvre vers la droite, puis revient.
+    const ouvert = p < 0.1 ? 0 : p < 0.2 ? (p - 0.1) / 0.1 : p < 0.84 ? 1 : p < 0.94 ? 1 - (p - 0.84) / 0.1 : 0;
+    const bx = x0 + 3;
+    const bw = cw - 6;
+    const cache = Math.round(bw * (1 - ouvert));
+    c.fillStyle = '#12150f';
+    if (p < 0.5) c.fillRect(bx + bw - cache, wy - e - 1, cache, 9 * e + 2);
+    else c.fillRect(bx, wy - e - 1, cache, 9 * e + 2);
+    // Le nom, comme le logo du jeu : « COVER » caviardé, découpé dans un bandeau vert.
+    const nx = Math.round(z.tx - largeur('UNDERCOVER', z.e) / 2);
+    const ny = Math.round(z.ty - 3.5 * z.e);
+    const debut = nx + 5 * 6 * z.e;
+    detoure(c, 'UNDER', nx, ny, z.e, '#86c440');
+    c.fillStyle = '#86c440';
+    c.fillRect(debut - 2 * z.e, ny - z.e, largeur('COVER', z.e) + 3 * z.e, 9 * z.e);
+    c.fillStyle = '#0b1009';
+    texte(c, 'COVER', debut, ny, z.e);
+    bandeau(c, 'TOUT LE MONDE A LE MEME MOT. SAUF UN.     ', G.sur - 10, 1, '#86c440', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -1103,7 +1175,12 @@ function demarre() {
     ctx.globalCompositeOperation = 'source-over';
     ctx.setLineDash([]);
     ctx.lineWidth = 1;
-    SCENES[scene](ctx, t);
+    // Une scène qui échoue ne doit pas figer tout le mur : on passe simplement cette image.
+    try {
+      SCENES[scene](ctx, t);
+    } catch (err) {
+      console.warn(scene, err);
+    }
   };
 
   const envoie = (unite, source) => {
@@ -1112,7 +1189,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -1187,7 +1264,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -1252,4 +1329,6 @@ function demarre() {
   'https://cockroach-poker-kksi.onrender.com/',
   'https://hanabi-2bap.onrender.com/',
   'https://wavelength-hnfh.onrender.com/',
+  // Adresse provisoire, à remplacer par celle du service Render d'Undercover.
+  'https://undercover.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
