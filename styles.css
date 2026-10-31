@@ -158,6 +158,7 @@ main {
 .is-inspecteur { --c: #e0b77d; --b: rgba(224, 183, 125, 0.55); }
 .is-justone { --c: #4a86ff; --b: rgba(74, 134, 255, 0.6); }
 .is-skyjo { --c: #ee6bff; --b: rgba(238, 107, 255, 0.55); }
+.is-trio { --c: #22c7c4; --b: rgba(34, 199, 196, 0.55); }
 
 .note {
   max-width: 1320px;
@@ -169,7 +170,7 @@ main {
 
 @media (min-width: 760px) {
   main { padding: 0 24px max(12px, env(safe-area-inset-bottom)); }
-  /* Six par rangée : les seize jeux tiennent en trois rangées (6, 6, et 4 au centre) et laissent de la hauteur au mur. */
+  /* Six par rangée : les dix-sept jeux tiennent en trois rangées (6, 6, et 5 au centre) et laissent de la hauteur au mur. */
   .jeux {
     --par-rangee: 6;
     --ecart: 14px;
@@ -183,9 +184,9 @@ main {
   .note { font-size: 0.76rem; margin-top: 10px; }
 }
 
-/* Grand écran : deux rangées pleines de huit, pour laisser au mur toute sa hauteur. */
+/* Grand écran : deux rangées, de neuf et de huit, pour laisser au mur toute sa hauteur. */
 @media (min-width: 1200px) {
-  .jeux { --par-rangee: 8; }
+  .jeux { --par-rangee: 9; }
   .jeu { padding: 12px 14px; }
   .jeu-nom { font-size: clamp(0.95rem, 1.25vw, 1.4rem); }
 }

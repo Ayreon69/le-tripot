@@ -1375,6 +1375,170 @@ const SCENES = {
     });
     bandeau(c, 'RETOURNE, ECHANGE, ET FINIS AVEC LE MOINS DE POINTS.     ', G.sur - 10, 1, '#ffc23d', 28, t);
   },
+
+  trio(c, t) {
+    let z = zones(['TRIO']);
+    // Sur téléphone, le nom rapetisse d'un cran pour que les cartes gardent leurs chiffres.
+    if (!G.paysage && z.e >= 3) {
+      const e = z.e - 1;
+      z = { ...z, e, ah: Math.max(6, z.bas - z.ay - 9 * e - 3), ty: z.bas - 4.5 * e };
+    }
+    // Le papier Memphis des années 80, version nuit : de petites formes roses, jaunes et turquoise dérivent sur l'encre.
+    c.fillStyle = '#1f1b2e';
+    c.fillRect(0, 0, G.w, G.h);
+    const FORMES = ['#ff5fa2', '#ffd23f', '#19b3b1', '#4a6cff', '#b5e04a'];
+    const hauteur = Math.max(4, G.sur - 12);
+    for (let i = 0; i < 30; i++) {
+      const x = Math.round((((i * 37.7 + t * (1.5 + (i % 3))) % (G.w + 10)) + G.w + 10) % (G.w + 10)) - 5;
+      const y = Math.round(((i * 53) % hauteur) + Math.sin(t * 0.8 + i) * 1.5) + 1;
+      c.fillStyle = FORMES[i % FORMES.length];
+      const f = i % 4;
+      if (f === 0) for (let j = 0; j < 6; j++) c.fillRect(x + j, y + (j % 2), 1, 1);
+      else if (f === 1) c.fillRect(x, y, 2, 2);
+      else if (f === 2) {
+        c.fillRect(x - 1, y, 3, 1);
+        c.fillRect(x, y - 1, 1, 3);
+      } else {
+        c.fillRect(x + 1, y, 1, 1);
+        c.fillRect(x, y + 1, 3, 1);
+      }
+    }
+    // Les faces des cartes, comme dans le jeu : une couleur et un motif par nombre, le 7 en noir et or.
+    const FACES = { 1: ['#ff6b6b', '#ffd6d1'], 2: ['#ff9a3d', '#ffe4c4'], 3: ['#ffd23f', '#e08e00'], 4: ['#b5e04a', '#4f8a12'], 5: ['#3ec98a', '#d2f7e4'], 6: ['#19b3b1', '#c4f3f0'], 7: ['#1f1b2e', '#ffd23f'], 8: ['#5cc8ff', '#e3f6ff'], 9: ['#4a6cff', '#d0d9ff'], 10: ['#8a63ff', '#e2d7ff'], 11: ['#d65cff', '#f7d9ff'], 12: ['#ff5fa2', '#ffd6e8'] };
+    const g = z.ah >= 40 && z.aw >= 80 ? 3 : 2;
+    const cw = Math.max(6, Math.floor(Math.min((z.aw * 0.86 - 2 * g) / 3, (z.ah - 4) / 1.4)));
+    const ch = Math.round(cw * 1.4);
+    const gx = Math.round(z.ax + (z.aw - (3 * cw + 2 * g)) / 2);
+    const gy = Math.round(z.ay + (z.ah - ch) / 2) + 1;
+    // Le « 1 » tassé, pour que 10, 11 et 12 tiennent sur une petite carte.
+    const chiffres = (s, x, y, e) => {
+      for (const k of s) {
+        const gl = POLICE[k];
+        const g0 = k === '1' ? 1 : 0;
+        const lg = k === '1' ? 3 : 5;
+        for (let r = 0; r < 7; r++) for (let b = g0; b < g0 + lg; b++) if ((gl[r] >> (4 - b)) & 1) c.fillRect(x + (b - g0) * e, y + r * e, e, e);
+        x += (lg + 1) * e;
+      }
+    };
+    const large = (s) => [...s].reduce((a, k) => a + (k === '1' ? 4 : 6), -1);
+    const carte = (x, y, w, h, v, eclat) => {
+      if (w < 1) return;
+      c.fillStyle = 'rgba(0,0,0,.6)';
+      c.fillRect(x + 1, y + 1, w, h);
+      c.fillStyle = eclat ? '#ffffff' : '#fffaf2';
+      c.fillRect(x, y, w, h);
+      if (w < 3) return;
+      if (v === null) {
+        // Le dos : l'encre et les trois ronds du logo.
+        c.fillStyle = '#2b2540';
+        c.fillRect(x + 1, y + 1, w - 2, h - 2);
+        const r = Math.max(1, Math.round(w * 0.12));
+        const cx = x + w / 2;
+        const cy = y + h / 2;
+        [['#ff5fa2', -1, -0.6], ['#ffd23f', 1, -0.6], ['#19b3b1', 0, 0.85]].forEach(([k, dx, dy]) => {
+          c.fillStyle = k;
+          c.beginPath();
+          c.arc(cx + dx * r, cy + dy * r, r, 0, 7);
+          c.fill();
+        });
+        return;
+      }
+      const [fond, motif] = FACES[v];
+      c.fillStyle = fond;
+      c.fillRect(x + 1, y + 1, w - 2, h - 2);
+      c.fillStyle = motif;
+      for (let dy = 2; dy < h - 2; dy += 3) for (let dx = 2 + ((dy / 3) % 2); dx < w - 2; dx += 4) if (v !== 7 || Math.sin(t * 6 + dx * 1.7 + dy) > 0.3) c.fillRect(x + dx, y + dy, 1, 1);
+      // Le nombre, dans son rond crème (or pour le 7) s'il y a la place.
+      const s = String(v);
+      const e = Math.max(1, Math.min(Math.floor((w * 0.62) / large(s)), Math.floor((h * 0.4) / 7)));
+      const tw = large(s) * e;
+      const R = Math.max(tw / 2 + e + 1, 3.5 * e + 2);
+      if (R * 2 <= w - 2) {
+        c.fillStyle = '#1f1b2e';
+        c.beginPath();
+        c.arc(x + w / 2, y + h / 2, R + 1, 0, 7);
+        c.fill();
+        c.fillStyle = v === 7 ? '#ffd23f' : '#fffaf2';
+        c.beginPath();
+        c.arc(x + w / 2, y + h / 2, R, 0, 7);
+        c.fill();
+        c.fillStyle = '#1f1b2e';
+      } else c.fillStyle = v === 7 ? '#ffd23f' : '#1f1b2e';
+      chiffres(s, Math.round(x + (w - tw) / 2), Math.round(y + (h - 7 * e) / 2), e);
+    };
+    // Chaque tour : on retourne trois cartes une à une. Une fois sur deux, la troisième diffère et tout repart ; l'autre fois, c'est un trio.
+    const cycle = 5.6;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const SUITE = [9, 7, 4, 12, 2, 7, 11, 6];
+    const v = SUITE[n % SUITE.length];
+    const trio = n % 2 === 1;
+    const valeurs = trio ? [v, v, v] : [v, v, ((v + 3) % 12) + 1];
+    const envol = trio ? Math.max(0, Math.min(1, (p - 0.8) / 0.12)) : 0;
+    const retour = Math.max(0, Math.min(1, (p - (trio ? 0.93 : 0.84)) / 0.07));
+    const tremble = !trio && p > 0.56 && p < 0.66 ? Math.round(Math.sin(t * 70)) : 0;
+    for (let i = 0; i < 3; i++) {
+      let q = Math.max(0, Math.min(1, (p - (0.08 + i * 0.16)) / 0.06));
+      if (!trio && retour > 0) q = 1 - retour;
+      let x = gx + i * (cw + g) + tremble;
+      let y = gy - (q === 1 ? 1 : 0);
+      if (trio && envol > 0) {
+        if (retour > 0) {
+          c.globalAlpha = retour;
+          carte(gx + i * (cw + g), gy, cw, ch, null, false);
+          c.globalAlpha = 1;
+          continue;
+        }
+        y -= Math.round(envol * envol * (gy + ch + 4));
+        x += Math.round((i - 1) * envol * cw * 0.5);
+      }
+      const ww = Math.round(cw * Math.abs(Math.cos(Math.PI * q)));
+      const eclat = trio && p > 0.56 && envol === 0 && Math.sin(t * 20) > 0.2;
+      carte(x + Math.round((cw - ww) / 2), y, ww, ch, q > 0.5 ? valeurs[i] : null, eclat);
+      // La carte qui ne va pas s'entoure de rouge.
+      if (!trio && i === 2 && q === 1 && p > 0.56 && Math.sin(t * 16) > -0.3) {
+        c.fillStyle = '#ff3b3b';
+        c.fillRect(x - 1, y - 1, cw + 2, 1);
+        c.fillRect(x - 1, y + ch, cw + 2, 1);
+        c.fillRect(x - 1, y, 1, ch);
+        c.fillRect(x + cw, y, 1, ch);
+      }
+    }
+    // Le tampon, de travers comme sur la table : « RATE » en rouge, « TRIO ! » en rose.
+    if (p > 0.58 && p < (trio ? 0.8 : 0.84)) {
+      const mot = trio ? 'TRIO !' : 'RATE';
+      const se = Math.max(1, Math.min(Math.floor(((3 * cw + 2 * g) * 0.55) / (largeur(mot) + 6)), Math.floor(ch / 30)));
+      const sw = largeur(mot, se) + 6 * se;
+      const sh = 13 * se;
+      const sx = Math.round(gx + (3 * cw + 2 * g - sw) / 2);
+      // Posé sur le bas des cartes, pour qu'on voie encore les nombres.
+      const sy = Math.round(gy + ch - sh * 0.7);
+      c.fillStyle = '#1f1b2e';
+      c.fillRect(sx + se, sy + se, sw, sh);
+      c.fillStyle = trio ? '#ff5fa2' : '#ff3b3b';
+      c.fillRect(sx, sy, sw, sh);
+      c.fillStyle = '#fffaf2';
+      texte(c, mot, sx + 3 * se, sy + 3 * se, se);
+    }
+    // Le nom, comme le logo : des lettres crème qui dansent, avec leurs trois ombres turquoise, jaune et rose.
+    const NOM = 'TRIO';
+    const nx = Math.round(z.tx - largeur(NOM, z.e) / 2);
+    const ny = Math.round(z.ty - 3.5 * z.e);
+    const o = Math.max(1, Math.round(z.e / 3));
+    [...NOM].forEach((l, i) => {
+      const x = nx + i * 6 * z.e;
+      const y = ny + Math.round(Math.sin(t * 2.4 + i * 1.4) * z.e * 0.5);
+      c.fillStyle = '#19b3b1';
+      texte(c, l, x + 3 * o, y + 3 * o, z.e);
+      c.fillStyle = '#ffd23f';
+      texte(c, l, x + 2 * o, y + 2 * o, z.e);
+      c.fillStyle = '#ff5fa2';
+      texte(c, l, x + o, y + o, z.e);
+      c.fillStyle = '#fffaf2';
+      texte(c, l, x, y, z.e);
+    });
+    bandeau(c, 'PLUS PETITE ? PLUS GRANDE ? RETIENS TOUT, ET REUNIS TROIS CARTES PAREILLES.     ', G.sur - 10, 1, '#ffd23f', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -1545,7 +1709,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -1620,7 +1784,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -1689,4 +1853,5 @@ function demarre() {
   'https://inspecteur.onrender.com/',
   'https://just-one-3bg0.onrender.com/',
   'https://skyjo-zmtt.onrender.com/',
+  'https://trio.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
