@@ -1251,6 +1251,5 @@ function demarre() {
   'https://coup-nb7f.onrender.com/',
   'https://cockroach-poker-kksi.onrender.com/',
   'https://hanabi-2bap.onrender.com/',
-  // Adresse provisoire, à remplacer par celle du service Render de Wavelength.
-  'https://wavelength.onrender.com/',
+  'https://wavelength-hnfh.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
