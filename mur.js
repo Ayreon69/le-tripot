@@ -838,6 +838,115 @@ const SCENES = {
     nom(c, ['HANABI'], ['#f4f2ec'], z);
     bandeau(c, 'TU VOIS LES CARTES DE TOUS, SAUF LES TIENNES.     ', G.sur - 10, 1, '#ff6a52', 28, t);
   },
+
+  wavelength(c, t) {
+    const fond = c.createLinearGradient(0, 0, 0, G.sur);
+    fond.addColorStop(0, '#120f2a');
+    fond.addColorStop(1, '#2b1d55');
+    c.fillStyle = fond;
+    c.fillRect(0, 0, G.w, G.h);
+    const z = zones(['WAVELENGTH']);
+    const R = Math.max(8, Math.floor(Math.min(z.aw / 2 - 3, z.ah - 5)));
+    const cx = Math.round(z.ax + z.aw / 2);
+    const cy = Math.round(z.ay + (z.ah + R) / 2);
+    const angle = (v) => Math.PI * (1 + v / 100);
+    // Les ondes qui partent du cadran, comme une radio qu'on cherche à régler.
+    c.lineWidth = 1;
+    for (let k = 0; k < 5; k++) {
+      const r = R * 0.9 + ((t * 10 + k * R * 0.5) % (R * 2.5));
+      const a = Math.max(0, Math.min(1, 1 - (r - R) / (R * 1.6)));
+      c.strokeStyle = k % 2 ? `rgba(255,79,123,${0.5 * a})` : `rgba(90,130,255,${0.5 * a})`;
+      c.beginPath();
+      c.arc(cx, cy, r, Math.PI, 2 * Math.PI);
+      c.stroke();
+    }
+    // Une manche par cycle : l'aiguille cherche, se pose, puis le volet pivote et dévoile la cible.
+    const P = 4.6;
+    const n = Math.floor(t / P);
+    const p = (t % P) / P;
+    const hasard = (k) => {
+      const s = Math.sin(n * 91.7 + k * 12.3) * 43758.5;
+      return s - Math.floor(s);
+    };
+    const cible = 18 + hasard(1) * 64;
+    const pose = cible + [0, 4, -5, 8][Math.floor(hasard(2) * 4)];
+    const cherche = p < 0.5 ? 1 - p / 0.5 : 0;
+    const aiguille = Math.max(3, Math.min(97, pose + 38 * cherche * cherche * Math.sin(p * 26 + n)));
+    const ouvre = p < 0.56 ? 0 : p < 0.7 ? (p - 0.56) / 0.14 : p < 0.92 ? 1 : 1 + (p - 0.92) / 0.08;
+
+    c.fillStyle = '#f3ecdf';
+    c.beginPath();
+    c.moveTo(cx, cy);
+    c.arc(cx, cy, R, Math.PI, 2 * Math.PI);
+    c.fill();
+    for (const [a, b, k] of [[-10, -6, '#ffcb3d'], [-6, -2, '#ff8a2b'], [-2, 2, '#ff4f7b'], [2, 6, '#ff8a2b'], [6, 10, '#ffcb3d']]) {
+      c.fillStyle = k;
+      c.beginPath();
+      c.moveTo(cx, cy);
+      c.arc(cx, cy, R - 1, angle(Math.max(0, cible + a)), angle(Math.min(100, cible + b)));
+      c.fill();
+    }
+    // Le volet en deux couleurs tourne autour du moyeu et disparaît sous le socle.
+    c.save();
+    c.beginPath();
+    c.rect(cx - R - 1, cy - R - 1, 2 * R + 2, R + 1);
+    c.clip();
+    c.translate(cx, cy);
+    c.rotate(ouvre * Math.PI);
+    c.fillStyle = '#2f5bd3';
+    c.beginPath();
+    c.moveTo(0, 0);
+    c.arc(0, 0, R, Math.PI, 1.5 * Math.PI);
+    c.fill();
+    c.fillStyle = '#ff4f7b';
+    c.beginPath();
+    c.moveTo(0, 0);
+    c.arc(0, 0, R, 1.5 * Math.PI, 2 * Math.PI);
+    c.fill();
+    c.restore();
+    c.fillStyle = '#2f5bd3';
+    c.fillRect(cx - R - 2, cy + 1, Math.round(R * 0.4), 2);
+    c.fillStyle = '#ff4f7b';
+    c.fillRect(cx + R + 2 - Math.round(R * 0.4), cy + 1, Math.round(R * 0.4), 2);
+
+    const an = angle(aiguille);
+    const bout = [cx + Math.cos(an) * R * 0.9, cy + Math.sin(an) * R * 0.9];
+    const epais = Math.max(1, Math.round(R / 24));
+    c.lineCap = 'round';
+    c.strokeStyle = '#120f2a';
+    c.lineWidth = epais + 2;
+    c.beginPath();
+    c.moveTo(cx, cy);
+    c.lineTo(...bout);
+    c.stroke();
+    c.strokeStyle = '#fffdf6';
+    c.lineWidth = epais;
+    c.stroke();
+    c.lineCap = 'butt';
+    c.fillStyle = '#ff4f7b';
+    c.beginPath();
+    c.arc(bout[0], bout[1], Math.max(1.2, R * 0.05), 0, 7);
+    c.fill();
+    c.fillStyle = '#120f2a';
+    c.beginPath();
+    c.arc(cx, cy, Math.max(2, R * 0.12), 0, 7);
+    c.fill();
+    c.fillStyle = '#ffcb3d';
+    c.beginPath();
+    c.arc(cx, cy, Math.max(1, R * 0.05), 0, 7);
+    c.fill();
+
+    // Dévoilé : les points s'affichent au-dessus du moyeu.
+    if (ouvre >= 1 && p < 0.92) {
+      const d = Math.abs(pose - cible);
+      const points = d <= 2 ? 4 : d <= 6 ? 3 : 2;
+      const e = Math.max(1, Math.round(R / 16));
+      const s = `+${points}`;
+      detoure(c, s, Math.round(cx - largeur(s, e) / 2), Math.round(cy - R * 0.55 - 3.5 * e), e, points === 4 ? '#ff4f7b' : points === 3 ? '#ff8a2b' : '#ffcb3d');
+    }
+    nom(c, ['WAVELENGTH'], ['#ff8a2b'], z);
+    bandeau(c, 'UN INDICE, UN CADRAN, ET TOUTE LA TABLE QUI DEBAT.     ', G.sur - 10, 1, '#ffcb3d', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -1003,7 +1112,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -1078,7 +1187,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -1142,4 +1251,6 @@ function demarre() {
   'https://coup-nb7f.onrender.com/',
   'https://cockroach-poker-kksi.onrender.com/',
   'https://hanabi-2bap.onrender.com/',
+  // Adresse provisoire, à remplacer par celle du service Render de Wavelength.
+  'https://wavelength.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));

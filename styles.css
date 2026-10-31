@@ -47,7 +47,7 @@ main {
   background: linear-gradient(transparent, #050507 34px);
 }
 
-/* Rangées pleines, et la dernière centrée : onze jeux ne laissent pas de trou à gauche. */
+/* Rangées pleines, et une dernière rangée incomplète reste centrée, sans trou à gauche. */
 .jeux {
   --par-rangee: 3;
   --ecart: 8px;
@@ -153,6 +153,7 @@ main {
 .is-coup { --c: #8ea6ff; --b: rgba(142, 166, 255, 0.55); }
 .is-cockroach { --c: #4fd1a0; --b: rgba(79, 209, 160, 0.55); }
 .is-hanabi { --c: #d8f05a; --b: rgba(216, 240, 90, 0.55); }
+.is-wavelength { --c: #ff8a2b; --b: rgba(255, 138, 43, 0.55); }
 
 .note {
   max-width: 1320px;
@@ -177,7 +178,7 @@ main {
   .note { font-size: 0.76rem; margin-top: 10px; }
 }
 
-/* Grand écran : deux rangées, six puis cinq, pour laisser au mur toute sa hauteur. */
+/* Grand écran : deux rangées de six, pour laisser au mur toute sa hauteur. */
 @media (min-width: 1200px) {
   .jeux { --par-rangee: 6; }
   .jeu-nom { font-size: clamp(1.05rem, 1.6vw, 1.7rem); }
