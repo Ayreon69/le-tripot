@@ -188,6 +188,15 @@ main {
   }
   .jeu-nom { font-size: clamp(0.85rem, 1.75vw, 1.9rem); }
   .jeu-info { font-size: 0.8rem; }
+  /* Boutons étroits : la flèche passe dans le coin bas, où elle ne mord ni sur le nom ni sur le nombre de joueurs. */
+  .jeu::after {
+    top: auto;
+    right: 8px;
+    bottom: 4px;
+    font-size: 1rem;
+    transform: translateX(-8px);
+  }
+  .jeu:hover::after { transform: none; }
   .note { font-size: 0.76rem; margin-top: 10px; }
 }
 
