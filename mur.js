@@ -1737,6 +1737,90 @@ const SCENES = {
     nom(c, ['AVALON'], ['#f8db7d'], z);
     bandeau(c, 'LOYAUX OU SBIRES ? COMPOSE L EQUIPE, VOTE EN SECRET, ET DEMASQUE LE TRAITRE.     ', G.sur - 10, 1, '#ff8fa3', 28, t);
   },
+
+  removeone(c, t) {
+    let z = zones(['REMOVE', 'ONE']);
+    // Sur téléphone, le nom rapetisse d'un cran pour que les plaques gardent des chiffres lisibles.
+    if (!G.paysage && z.e >= 3) {
+      const e = z.e - 1;
+      z = { ...z, e, ah: Math.max(6, z.bas - z.ay - 18 * e - 3), ty: z.bas - 9 * e };
+    }
+    // Le mur de la cellule : du béton banché la nuit, ses joints, ses trous de banche et les jours comptés à la craie.
+    c.fillStyle = '#2b2925';
+    c.fillRect(0, 0, G.w, G.h);
+    c.fillStyle = '#25231f';
+    for (let x = 23; x < G.w; x += 24) c.fillRect(x, 0, 1, G.sur - 11);
+    for (let y = 15; y < G.sur - 11; y += 16) c.fillRect(0, y, G.w, 1);
+    c.fillStyle = '#45413a';
+    for (let x = 11; x < G.w; x += 24) for (let y = 7; y < G.sur - 12; y += 16) c.fillRect(x, y, 1, 1);
+    c.fillStyle = '#6d675c';
+    for (let i = 0; i < 4; i++) c.fillRect(3 + i * 2, 3, 1, 5);
+    for (let i = 0; i < 9; i++) c.fillRect(2 + i, 7 - Math.floor(i / 2), 1, 1);
+    // Deux plaques émaillées tombent, l'une est barrée et s'éteint, l'autre est jouée : « SEUL » si personne d'autre ne l'a, « DOUBLE » sinon.
+    const SUITE = [[2, 6, 1, true], [1, 4, 0, false], [3, 7, 1, true], [1, 5, 1, false], [4, 8, 1, true]];
+    const cycle = 5.2;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const [a, b, retiree, seul] = SUITE[n % SUITE.length];
+    const g = Math.max(2, Math.round(z.aw * 0.08));
+    const cw = Math.max(6, Math.floor(Math.min((z.aw * 0.7 - g) / 2, (z.ah - 4) / 1.4)));
+    const ch = Math.round(cw * 1.4);
+    const gx = Math.round(z.ax + (z.aw - (2 * cw + g)) / 2);
+    const gy = Math.round(z.ay + (z.ah - ch) / 2) + 1;
+    const sortie = Math.max(0, Math.min(1, (p - 0.92) / 0.08));
+    // Sur un mur de LED, ce qui brille se lit : la plaque est un cadre d'émail allumé, son numéro au pochoir aussi.
+    const plaque = (x, y, v, etat) => {
+      const lum = etat === 'seul' ? '#ff5a1f' : etat === 'eteinte' ? '#5c574f' : '#f4f1ea';
+      const bord = cw >= 22 ? 2 : 1;
+      c.fillStyle = 'rgba(0,0,0,.6)';
+      c.fillRect(x + 1, y + 1, cw, ch);
+      c.fillStyle = lum;
+      c.fillRect(x, y, cw, ch);
+      c.fillStyle = etat === 'seul' ? '#2a120a' : '#1d1b18';
+      c.fillRect(x + bord, y + bord, cw - 2 * bord, ch - 2 * bord);
+      // Le trou pour le crochet.
+      c.fillStyle = lum;
+      c.fillRect(x + Math.floor(cw / 2), y + bord + Math.max(1, Math.round(ch * 0.07)), 1, 1);
+      const e = Math.max(1, Math.min(Math.floor((cw - 2 * bord - 2) / 5), Math.floor((ch - 2 * bord - 6) / 7)));
+      texte(c, String(v), Math.round(x + (cw - 5 * e) / 2), Math.round(y + (ch - 7 * e) / 2 + ch * 0.06), e);
+    };
+    const barre = Math.max(0, Math.min(1, (p - 0.36) / 0.08));
+    const eteinte = p > 0.48;
+    const joue = p > 0.58;
+    [a, b].forEach((v, i) => {
+      const chute = Math.max(0, Math.min(1, (p - (0.04 + i * 0.1)) / 0.1));
+      if (chute === 0) return;
+      const x = gx + i * (cw + g);
+      let y = Math.round(gy - (1 - chute) * (1 - chute) * (gy + ch + 2)) - Math.round(sortie * (G.sur - gy));
+      const etat = i === retiree ? (eteinte ? 'eteinte' : 'neuve') : joue && seul ? 'seul' : joue ? 'eteinte' : 'neuve';
+      if (i !== retiree && joue && seul) y -= 1;
+      plaque(x, y, v, etat);
+      // La bande orange qui barre la carte retirée, en diagonale.
+      if (i === retiree && barre > 0) {
+        c.fillStyle = '#ff5a1f';
+        const long = Math.round((cw + 4) * barre);
+        for (let k = 0; k < long; k++) c.fillRect(x - 2 + k, y + Math.round(ch * 0.68 - k * (ch * 0.36) / (cw + 4)), 1, Math.max(2, Math.round(ch * 0.12)));
+      }
+    });
+    // Le tampon, de travers, posé sous la carte jouée.
+    if (joue && sortie === 0) {
+      const mot = seul ? 'SEUL' : 'DOUBLE';
+      const se = Math.max(1, Math.min(Math.floor((cw * 1.6) / (largeur(mot) + 4)), Math.floor(ch / 24)));
+      const sw = largeur(mot, se) + 4 * se;
+      const sh = 11 * se;
+      const kx = gx + (1 - retiree) * (cw + g);
+      const sx = Math.round(Math.max(1, Math.min(G.w - sw - 2, kx + (cw - sw) / 2)));
+      const sy = Math.round(gy + ch - sh * 0.6);
+      c.fillStyle = '#000';
+      c.fillRect(sx + se, sy + se, sw, sh);
+      c.fillStyle = seul ? '#191714' : '#8e959b';
+      c.fillRect(sx, sy, sw, sh);
+      c.fillStyle = seul ? '#f4f1ea' : '#191714';
+      texte(c, mot, sx + 2 * se, sy + 2 * se, se);
+    }
+    nom(c, ['REMOVE', 'ONE'], ['#f4f1ea', '#ff5a1f'], z);
+    bandeau(c, "POSE DEUX CARTES, N'EN JOUE QU'UNE. LE PLUS PETIT NOMBRE QUE PERSONNE D'AUTRE N'A JOUE GAGNE.     ", G.sur - 10, 1, '#ff5a1f', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -1907,7 +1991,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -1983,7 +2067,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -2055,4 +2139,5 @@ function demarre() {
   'https://trio-k6b5.onrender.com/',
   'https://citadelles-59hy.onrender.com/',
   'https://avalon-f9o2.onrender.com/',
+  'https://remove-one.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
