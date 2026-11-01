@@ -162,6 +162,7 @@ main {
 .is-citadelles { --c: #b45cff; --b: rgba(180, 92, 255, 0.55); }
 .is-avalon { --c: #ff8fa3; --b: rgba(255, 143, 163, 0.55); }
 .is-remove-one { --c: #aeb8c1; --b: rgba(174, 184, 193, 0.6); }
+.is-balance-mancala { --c: #ff4b3e; --b: rgba(255, 75, 62, 0.55); }
 
 .note {
   max-width: 1320px;

@@ -1821,6 +1821,99 @@ const SCENES = {
     nom(c, ['REMOVE', 'ONE'], ['#f4f1ea', '#ff5a1f'], z);
     bandeau(c, "POSE DEUX CARTES, N'EN JOUE QU'UNE. LE PLUS PETIT NOMBRE QUE PERSONNE D'AUTRE N'A JOUE GAGNE.     ", G.sur - 10, 1, '#ff5a1f', 28, t);
   },
+
+  balancemancala(c, t) {
+    const z = zones(['BALANCE', 'MANCALA']);
+    // Une lame de tarot la nuit : l'encre, et des étoiles d'or qui scintillent.
+    c.fillStyle = '#140d0b';
+    c.fillRect(0, 0, G.w, G.h);
+    const semis = Math.floor((G.w * (G.sur - 11)) / 70);
+    for (let i = 0; i < semis; i++) {
+      c.fillStyle = Math.sin(t * 1.6 + i * 2.1) > 0.7 ? '#f2c230' : '#3b2a16';
+      c.fillRect((i * 37 + (i % 3) * 11) % G.w, (i * 53 + (i % 5) * 7) % (G.sur - 12), 1, 1);
+    }
+    // L'anneau des quatorze coupelles : le Diable en haut, l'Ange en bas, rouge, bleu, vert de chaque côté.
+    const PLATEAU = 'drbgrbgarbgrbg';
+    const TEINTE = { r: '#ff3b2f', b: '#3f7bff', g: '#2fd35a', d: '#a3121a', a: '#fff3cf' };
+    const PIONS = ['#f2c230', '#f6efe0', '#ff8fb0', '#7fd3f0', '#c6a3e3'];
+    const cx = z.ax + z.aw / 2;
+    const cy = z.ay + z.ah / 2 + 1;
+    const rx = Math.max(6, Math.min(z.aw * 0.46, z.ah * 0.62));
+    const ry = Math.max(5, z.ah * 0.38);
+    const r = Math.max(1, Math.floor(Math.min(rx, ry) * 0.17));
+    const ou = [...PLATEAU].map((_, i) => {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / 14;
+      return [Math.round(cx + Math.cos(a) * rx), Math.round(cy + Math.sin(a) * ry)];
+    });
+    const disque = (x, y, q) => {
+      for (let dy = -q; dy <= q; dy++) {
+        const w = Math.floor(Math.sqrt(q * q - dy * dy + q * 0.6));
+        c.fillRect(x - w, y + dy, 2 * w + 1, 1);
+      }
+    };
+    // Chaque tour, une coupelle est semée : ses pions tombent un par un dans les suivantes, et le dernier fait marquer.
+    const SUITE = [[1, [0, 2, 0]], [4, [3, 1, 4]], [9, [2, 0, 3, 1, 4]], [10, [4, 1]], [2, [1, 3, 0, 2]]];
+    const cycle = 5.6;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const [depart, main] = SUITE[n % SUITE.length];
+    const pas = 0.09;
+    const tombes = Math.max(0, Math.min(main.length, Math.floor((p - 0.14) / pas) + 1));
+    const fini = p > 0.14 + main.length * pas + 0.04;
+    const arrivee = (depart + main.length) % 14;
+    // Ce qui attend dans les coupelles, toujours le même départ : un ou deux pions.
+    const BASE = [1, 2, 0, 1, 2, 1, 0, 2, 1, 0, 2, 1, 1, 0];
+    const dedans = BASE.map((k, i) => (i === depart ? 0 : k));
+    for (let k = 0; k < tombes; k++) dedans[(depart + k + 1) % 14]++;
+    ou.forEach(([x, y], i) => {
+      const sorte = PLATEAU[i];
+      const brille = fini && i === arrivee && Math.floor(t * 6) % 2 === 0;
+      c.fillStyle = brille ? '#f2c230' : '#000';
+      disque(x, y + (brille ? 0 : 1), r + (brille ? 1 : 0));
+      c.fillStyle = TEINTE[sorte];
+      disque(x, y, r);
+      if (sorte === 'd') {
+        c.fillStyle = '#ff3b2f';
+        c.fillRect(x - r, y - r - 1, 1, 2);
+        c.fillRect(x + r, y - r - 1, 1, 2);
+      }
+      if (sorte === 'a') {
+        c.fillStyle = '#f2c230';
+        c.fillRect(x - Math.max(1, r - 1), y - r - 2, 2 * Math.max(1, r - 1) + 1, 1);
+      }
+      // Les pions dans la coupelle : des points clairs, au centre.
+      c.fillStyle = sorte === 'a' ? '#5b4520' : '#fff8e6';
+      const pts = [[0, 0], [-1, 1], [1, 1], [-1, -1], [1, -1], [0, 2], [0, -2]];
+      for (let k = 0; k < Math.min(dedans[i], pts.length); k++) c.fillRect(x + pts[k][0] * (r > 2 ? 1 : 0) + (r > 2 ? 0 : k % 2), y + pts[k][1] * (r > 2 ? 1 : 0), 1, 1);
+    });
+    // La poignée : les pions encore en main voyagent au-dessus de l'anneau, de coupelle en coupelle.
+    if (p > 0.06 && !fini) {
+      const f = Math.max(0, (p - 0.14) / pas);
+      const ici = Math.min(main.length, f);
+      const a = -Math.PI / 2 + ((depart + ici + (p < 0.14 ? 0 : 0.5)) * 2 * Math.PI) / 14;
+      const hx = Math.round(cx + Math.cos(a) * (rx + r + 3));
+      const hy = Math.round(cy + Math.sin(a) * (ry + r + 3));
+      main.slice(tombes).forEach((s, k) => {
+        c.fillStyle = '#000';
+        c.fillRect(hx - 1 + k * 2, hy, 2, 2);
+        c.fillStyle = PIONS[s];
+        c.fillRect(hx - 1 + k * 2, hy - 1, 2, 2);
+      });
+    }
+    // Le gain, au milieu de l'anneau : autant de points que de pions dans la coupelle d'arrivée, dans sa couleur.
+    if (fini && p < 0.94) {
+      const sorte = PLATEAU[arrivee];
+      const mot = `+${dedans[arrivee]}`;
+      const e = Math.max(1, Math.min(Math.floor((rx * 1.1) / largeur(mot)), Math.floor((ry * 0.8) / 7)));
+      detoure(c, mot, Math.round(cx - largeur(mot, e) / 2), Math.round(cy - (7 * e) / 2), e, sorte === 'd' ? '#ff3b2f' : sorte === 'a' ? '#f2c230' : TEINTE[sorte]);
+      if ((sorte === 'a' || sorte === 'd') && ry > 14) {
+        const sous = sorte === 'a' ? 'ANGE' : 'DIABLE';
+        detoure(c, sous, Math.round(cx - largeur(sous) / 2), Math.round(cy + (7 * e) / 2 + 2), 1, '#fff3cf');
+      }
+    }
+    nom(c, ['BALANCE', 'MANCALA'], ['#fff3cf', '#ff4b3e'], z);
+    bandeau(c, 'SEME LES PIONS DE TOUT LE MONDE : LE DERNIER FAIT MARQUER SON PROPRIETAIRE. A LA FIN, SEULE TA COULEUR LA PLUS FAIBLE COMPTE.     ', G.sur - 10, 1, '#f2c230', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -1991,7 +2084,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -2067,7 +2160,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -2140,4 +2233,5 @@ function demarre() {
   'https://citadelles-59hy.onrender.com/',
   'https://avalon-f9o2.onrender.com/',
   'https://remove-one.onrender.com/',
+  'https://balance-mancala.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
