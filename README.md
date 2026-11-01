@@ -10,7 +10,7 @@ Une simple page statique, sans étape de build : **https://akhis-games.onrender.
 3. Dans `mur.js` :
    - ajouter sa scène dans `SCENES`, sur le modèle des autres ;
    - l'ajouter à `PROGRAMME` et à `COULEURS` ;
-   - ajouter l'adresse de son serveur dans la liste de réveil, en bas du fichier.
+   - rien d'autre : le serveur du jeu survolé ou touché est réveillé d'après l'adresse de son bouton.
 
 4. Dans le jeu, sur l'accueil, à côté de « Tous les jeux », ajouter le lien `https://akhis-games.onrender.com/feedback.html?jeu=mon-jeu`, où `mon-jeu` est sa classe sans `is-`.
 

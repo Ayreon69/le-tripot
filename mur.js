@@ -2291,29 +2291,13 @@ function demarre() {
   requestAnimationFrame(image);
 }
 
-// Les serveurs s'endorment : on les réveille dès l'arrivée ici pour que le jeu choisi s'ouvre plus vite.
-// Équation Hi-Lo a un serveur séparé de sa page, c'est lui qu'il faut réveiller.
-[
-  'https://indian-poker-usrn.onrender.com/',
-  'https://holdem-sniper.onrender.com/',
-  'https://equation-hilo-serveur.onrender.com/',
-  'https://the-gang-fhvj.onrender.com/',
-  'https://skull-4rpt.onrender.com/',
-  'https://perudo-f6x0.onrender.com/',
-  'https://liar-game-nh9k.onrender.com/',
-  'https://black-and-white-hn5n.onrender.com/',
-  'https://coup-nb7f.onrender.com/',
-  'https://cockroach-poker-kksi.onrender.com/',
-  'https://hanabi-2bap.onrender.com/',
-  'https://wavelength-hnfh.onrender.com/',
-  'https://undercover-h60g.onrender.com/',
-  'https://inspecteur.onrender.com/',
-  'https://just-one-3bg0.onrender.com/',
-  'https://skyjo-zmtt.onrender.com/',
-  'https://trio-k6b5.onrender.com/',
-  'https://citadelles-59hy.onrender.com/',
-  'https://avalon-f9o2.onrender.com/',
-  'https://remove-one.onrender.com/',
-  'https://balance-mancala.onrender.com/',
-  'https://laying-grass.onrender.com/',
-].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
+// Les serveurs s'endorment : on réveille celui du jeu survolé ou touché pour qu'il s'ouvre plus vite.
+// Pas tous à chaque visite : chacun resterait allumé 15 min, et les heures gratuites de Render fondraient.
+const reveilles = new Set();
+function reveille(e) {
+  const url = e.target.closest?.('.jeu')?.href;
+  if (!url || reveilles.has(url)) return;
+  reveilles.add(url);
+  fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {});
+}
+for (const type of ['pointerover', 'pointerdown', 'focusin']) document.addEventListener(type, reveille);
