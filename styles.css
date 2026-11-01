@@ -162,6 +162,7 @@ main {
 .is-citadelles { --c: #b45cff; --b: rgba(180, 92, 255, 0.55); }
 .is-avalon { --c: #ff8fa3; --b: rgba(255, 143, 163, 0.55); }
 .is-remove-one { --c: #aeb8c1; --b: rgba(174, 184, 193, 0.6); }
+.is-laying-grass { --c: #8fdc3f; --b: rgba(143, 220, 63, 0.55); }
 
 .note {
   max-width: 1320px;
@@ -171,6 +172,20 @@ main {
   color: #8e8e99;
 }
 
+/* Téléphone : vingt-deux jeux font huit rangées. On les serre pour laisser au mur de quoi jouer sa scène. */
+@media (max-width: 759px) {
+  .jeux { --ecart: 6px; }
+  .jeu { min-height: 56px; padding: 6px 9px; }
+  .jeu-nom { font-size: 0.96rem; }
+  .jeu-info { margin-top: 3px; font-size: 0.72rem; }
+}
+
+/* Téléphone court : la page ne défile pas. Le nombre de joueurs s'efface pour que toutes les rangées restent à l'écran. */
+@media (max-width: 759px) and (max-height: 700px) {
+  .jeu { min-height: 46px; }
+  .jeu-info { display: none; }
+}
+
 /* Très petit téléphone : « Cockroach » doit tenir dans son bouton. */
 @media (max-width: 359px) {
   .jeu-nom { font-size: 0.84rem; }
@@ -178,16 +193,16 @@ main {
 
 @media (min-width: 760px) {
   main { padding: 0 24px max(12px, env(safe-area-inset-bottom)); }
-  /* Sept par rangée : les dix-neuf jeux tiennent en trois rangées (7, 7, et 5 au centre) et laissent de la hauteur au mur. */
+  /* Huit par rangée : les vingt-deux jeux tiennent en trois rangées (8, 8, et 6 au centre) et laissent de la hauteur au mur. */
   .jeux {
-    --par-rangee: 7;
+    --par-rangee: 8;
     --ecart: 14px;
   }
   .jeu {
     min-height: 96px;
     padding: 12px 8px;
   }
-  .jeu-nom { font-size: clamp(0.85rem, 1.75vw, 1.9rem); }
+  .jeu-nom { font-size: clamp(0.78rem, 1.6vw, 1.9rem); }
   .jeu-info { font-size: 0.8rem; }
   /* Boutons étroits : la flèche passe dans le coin bas, où elle ne mord ni sur le nom ni sur le nombre de joueurs. */
   .jeu::after {
@@ -201,9 +216,9 @@ main {
   .note { font-size: 0.76rem; margin-top: 10px; }
 }
 
-/* Grand écran : deux rangées, de dix et de neuf, pour laisser au mur toute sa hauteur. */
+/* Grand écran : deux rangées pleines, de onze, pour laisser au mur toute sa hauteur. */
 @media (min-width: 1280px) {
-  .jeux { --par-rangee: 10; }
+  .jeux { --par-rangee: 11; }
   .jeu { padding: 12px 10px; }
   /* Les boutons ne grandissent plus au-delà de 1440 px (grille de 1320 px) : la police s'arrête avec eux. */
   .jeu-nom { font-size: clamp(0.9rem, 1.1vw, 1.05rem); }

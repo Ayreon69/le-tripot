@@ -1821,6 +1821,87 @@ const SCENES = {
     nom(c, ['REMOVE', 'ONE'], ['#f4f1ea', '#ff5a1f'], z);
     bandeau(c, "POSE DEUX CARTES, N'EN JOUE QU'UNE. LE PLUS PETIT NOMBRE QUE PERSONNE D'AUTRE N'A JOUE GAGNE.     ", G.sur - 10, 1, '#ff5a1f', 28, t);
   },
+
+  layinggrass(c, t) {
+    const z = zones(['LAYING', 'GRASS']);
+    const q = Math.max(2, Math.floor(Math.min(z.aw, z.ah - 2) / 5));
+    const gx = Math.round(z.ax + (z.aw - 5 * q) / 2);
+    const gy = Math.round(z.ay + (z.ah - 5 * q) / 2);
+    // La terre la nuit, en damier comme le terrain du jeu, calé sur le carré à venir.
+    c.fillStyle = '#17100a';
+    c.fillRect(0, 0, G.w, G.h);
+    c.fillStyle = '#2c1f13';
+    const x0 = Math.floor(gx / q);
+    const y0 = Math.floor(gy / q);
+    for (let j = 0; j * q < G.sur + q; j++) for (let i = 0; i * q < G.w + q; i++) if ((i + j) % 2 === 0) c.fillRect(gx - x0 * q + i * q, gy - y0 * q + j * q, q, q);
+    // Sept plaques tombent et emboîtent un carré de 5 sur 5. Un cycle sur deux, en miroir.
+    const PLAQUES = [
+      [[1, 4], [2, 4], [3, 4]],
+      [[0, 3], [1, 3], [0, 4]],
+      [[3, 2], [3, 3], [4, 3], [4, 4]],
+      [[2, 1], [3, 1], [2, 2], [2, 3]],
+      [[0, 1], [0, 2], [1, 2]],
+      [[3, 0], [4, 0], [4, 1], [4, 2]],
+      [[0, 0], [1, 0], [2, 0], [1, 1]],
+    ];
+    const VERTS = ['#2f9a34', '#86e65d', '#46b841', '#a5ee74', '#37a538', '#74dc52', '#55c746'];
+    const cycle = 6.8;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const miroir = n % 2 === 1;
+    const sortie = Math.max(0, Math.min(1, (p - 0.93) / 0.07));
+    const leve = Math.round(sortie * sortie * (gy + 5 * q + 2));
+    PLAQUES.forEach((cases, k) => {
+      const chute = Math.max(0, Math.min(1, (p - 0.03 - k * 0.065) / 0.06));
+      if (chute === 0) return;
+      const dy = Math.round((1 - chute) * (1 - chute) * (gy + 5 * q + 2)) + leve;
+      const ici = cases.map(([i, j]) => [miroir ? 4 - i : i, j]);
+      const sienne = (i, j) => ici.some(([u, v]) => u === i && v === j);
+      ici.forEach(([i, j]) => {
+        const x = gx + i * q;
+        const y = gy + j * q - dy;
+        c.fillStyle = VERTS[k];
+        c.fillRect(x, y, q, q);
+        // Le joint de la plaque, sur ses seuls bords : on voit la forme de chacune.
+        if (q >= 4) {
+          c.fillStyle = '#123d17';
+          if (!sienne(i, j - 1)) c.fillRect(x, y, q, 1);
+          if (!sienne(i, j + 1)) c.fillRect(x, y + q - 1, q, 1);
+          if (!sienne(i - 1, j)) c.fillRect(x, y, 1, q);
+          if (!sienne(i + 1, j)) c.fillRect(x + q - 1, y, 1, q);
+        }
+      });
+    });
+    // La tondeuse passe : plus de joints, seulement les bandes d'un gazon de stade.
+    const tonte = Math.max(0, Math.min(1, (p - 0.52) / 0.16));
+    if (tonte > 0) {
+      const front = Math.round(5 * q * tonte);
+      for (let j = 0; j < 5; j++) {
+        c.fillStyle = j % 2 ? '#4fbb41' : '#86e65d';
+        c.fillRect(gx, gy + j * q - leve, front, q);
+      }
+      if (tonte < 1) {
+        c.fillStyle = '#ff5a36';
+        c.fillRect(gx + front, gy - 1, q >= 4 ? 2 : 1, 5 * q + 2);
+      }
+    }
+    // Le carré se mesure, en clignotant d'abord : c'est le seul moment où on annonce sa taille, comme à la fin d'une partie.
+    if (p > 0.7 && sortie === 0 && (p > 0.75 || Math.floor(t * 10) % 2 === 0)) {
+      const b = q >= 4 ? 2 : 1;
+      c.fillStyle = '#f6efdc';
+      c.fillRect(gx - b, gy - b, 5 * q + 2 * b, b);
+      c.fillRect(gx - b, gy + 5 * q, 5 * q + 2 * b, b);
+      c.fillRect(gx - b, gy, b, 5 * q);
+      c.fillRect(gx + 5 * q, gy, b, 5 * q);
+      const mot = '5X5';
+      if (5 * q >= largeur(mot) + 2) {
+        const e = Math.max(1, Math.min(Math.floor((5 * q - 4) / largeur(mot)), Math.floor((5 * q) / 14)));
+        detoure(c, mot, Math.round(gx + (5 * q - largeur(mot, e)) / 2), Math.round(gy + (5 * q - 7 * e) / 2), e, '#f6efdc');
+      }
+    }
+    nom(c, ['LAYING', 'GRASS'], ['#f6efdc', '#8fdc3f'], z);
+    bandeau(c, 'PLANTE TES PLAQUES, ARRACHE CELLES DES AUTRES, FAIS POUSSER LE PLUS GRAND CARRE.     ', G.sur - 10, 1, '#8fdc3f', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -1991,7 +2072,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'layinggrass'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -2067,7 +2148,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], layinggrass: [0.56, 0.86, 0.25] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
@@ -2140,4 +2221,5 @@ function demarre() {
   'https://citadelles-59hy.onrender.com/',
   'https://avalon-f9o2.onrender.com/',
   'https://remove-one.onrender.com/',
+  'https://laying-grass.onrender.com/',
 ].forEach((url) => fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}));
