@@ -199,9 +199,10 @@ main {
     --par-rangee: 8;
     --ecart: 14px;
   }
+  /* 6 px de marge : à 760 px, « Équation » tient tout juste dans son bouton. */
   .jeu {
     min-height: 96px;
-    padding: 12px 8px;
+    padding: 12px 6px;
   }
   .jeu-nom { font-size: clamp(0.78rem, 1.6vw, 1.9rem); }
   .jeu-info { font-size: 0.8rem; }
