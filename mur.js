@@ -1995,6 +1995,106 @@ const SCENES = {
     nom(c, ['LAYING', 'GRASS'], ['#f6efdc', '#8fdc3f'], z);
     bandeau(c, 'PLANTE TES PLAQUES, ARRACHE CELLES DES AUTRES, FAIS POUSSER LE PLUS GRAND CARRE.     ', G.sur - 10, 1, '#8fdc3f', 28, t);
   },
+
+  timeauction(c, t) {
+    const z = zones(['TIME', 'AUCTION']);
+    // L'appareil de chronométrage, la nuit : la bakélite sombre et le reflet orangé des tubes.
+    c.fillStyle = '#110b08';
+    c.fillRect(0, 0, G.w, G.h);
+    const disque = (x, y, q) => {
+      for (let dy = -q; dy <= q; dy++) {
+        const w = Math.floor(Math.sqrt(q * q - dy * dy + q * 0.6));
+        c.fillRect(x - w, y + dy, 2 * w + 1, 1);
+      }
+    };
+    // Chaque cycle, une enchère : 3, 2, 1, le temps file, les doigts lâchent un à un, le dernier remporte le jeton.
+    const cycle = 7.2;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const ARRETS = [84, 127, 61, 103, 92];
+    const LACHERS = [
+      [0.3, 0.62, 1, 0.45, 0.8],
+      [0.7, 0.2, 0.5, 1, 0.85],
+      [1, 0.4, 0.75, 0.15, 0.6],
+      [0.55, 0.9, 0.25, 0.7, 1],
+      [0.8, 1, 0.35, 0.6, 0.1],
+    ];
+    const lache = LACHERS[n % LACHERS.length];
+    const DEBUT = 0.27;
+    const FIN = 0.78;
+    const compte = p < DEBUT;
+    const fige = p >= FIN;
+    const course = Math.max(0, Math.min(1, (p - DEBUT) / (FIN - DEBUT)));
+    const dixiemes = Math.round(course * ARRETS[n % ARRETS.length]);
+    const sec = `${String(Math.floor(dixiemes / 10)).padStart(2, '0')}.${dixiemes % 10}`;
+    // Le tableau en haut, les boutons en dessous ; sur un mur trop bas, le tableau seul.
+    const boutons = z.ah >= 18;
+    const hb = boutons ? Math.floor(z.ah * 0.58) : z.ah;
+    const mot = largeur(`00:${sec}`) + 4 <= z.aw ? `00:${sec}` : sec;
+    const e = Math.max(1, Math.min(Math.floor((z.aw - 4) / largeur(mot)), Math.floor((hb - 2) / 9)));
+    const x0 = Math.round(z.ax + (z.aw - largeur(mot, e)) / 2);
+    const y0 = Math.round(z.ay + (hb - 7 * e) / 2);
+    [...mot].forEach((ch, i) => {
+      if (ch === ':' || ch === '.') return;
+      c.fillStyle = '#1d120b';
+      c.fillRect(x0 + i * 6 * e - 1, y0 - e, 5 * e + 2, 9 * e);
+      c.fillStyle = '#2c190d';
+      texte(c, '8', x0 + i * 6 * e, y0, e);
+    });
+    // Les chiffres rougeoient ; pendant le compte à rebours, le tableau attend, éteint ; à l'arrêt, il clignote.
+    c.fillStyle = compte ? '#5a2a10' : fige && p < FIN + 0.08 && Math.floor(t * 8) % 2 === 0 ? '#6e3412' : '#ffab4d';
+    texte(c, mot, x0, y0, e);
+    if (compte && p > 0.03) {
+      const k = 3 - Math.min(2, Math.floor(((p - 0.03) / (DEBUT - 0.03)) * 3));
+      const eg = Math.max(1, Math.min(Math.floor((hb - 2) / 8), e + 1));
+      const gx = Math.round(z.ax + (z.aw - 5 * eg) / 2);
+      const gy = Math.round(z.ay + (hb - 7 * eg) / 2);
+      c.fillStyle = '#110b08';
+      c.fillRect(gx - eg - 1, gy - eg - 1, 7 * eg + 2, 9 * eg + 2);
+      c.fillStyle = '#26170e';
+      c.fillRect(gx - 1, gy - eg, 5 * eg + 2, 9 * eg);
+      detoure(c, String(k), gx, gy, eg, '#ffd2a0');
+    }
+    // Les boutons rouges cerclés de laiton : allumés tant que le doigt tient.
+    if (boutons) {
+      const hz = z.ah - hb;
+      const r = Math.max(1, Math.min(Math.floor(z.aw / 14), Math.floor((hz - 3) / 2.4)));
+      const cy = Math.round(z.ay + hb + hz / 2);
+      lache.forEach((l, i) => {
+        const cx = Math.round(z.ax + (z.aw / 5) * (i + 0.5));
+        const tient = compte ? p > 0.02 + i * 0.012 : !fige && course < l;
+        const gagne = fige && l === 1;
+        c.fillStyle = '#000';
+        disque(cx, cy + 1, r + 1);
+        c.fillStyle = '#c9a25a';
+        disque(cx, cy, r + 1);
+        c.fillStyle = gagne ? (Math.floor(t * 6) % 2 ? '#ffd2a0' : '#ff8a2b') : tient ? '#ff4a2e' : '#4a1a12';
+        disque(cx, cy, r);
+        if (tient && r >= 2) {
+          c.fillStyle = '#ffc2b0';
+          c.fillRect(cx - Math.ceil(r / 2), cy - Math.ceil(r / 2), 1, 1);
+        }
+      });
+    }
+    // Le tampon du commissaire-priseur, posé sur le tableau.
+    if (fige && p > FIN + 0.06 && p < 0.97) {
+      const titre = 'ADJUGE';
+      const es = Math.max(1, Math.min(Math.floor((z.aw - 6) / largeur(titre)), Math.floor((hb - 4) / 9)));
+      const w = largeur(titre, es);
+      const sx = Math.round(z.ax + (z.aw - w) / 2);
+      const sy = Math.round(z.ay + (hb - 7 * es) / 2);
+      c.fillStyle = '#110b08';
+      c.fillRect(sx - 3, sy - 3, w + 6, 7 * es + 6);
+      c.fillStyle = '#ff5a3c';
+      c.fillRect(sx - 3, sy - 3, w + 6, 1);
+      c.fillRect(sx - 3, sy + 7 * es + 2, w + 6, 1);
+      c.fillRect(sx - 3, sy - 3, 1, 7 * es + 6);
+      c.fillRect(sx + w + 2, sy - 3, 1, 7 * es + 6);
+      texte(c, titre, sx, sy, es);
+    }
+    nom(c, ['TIME', 'AUCTION'], ['#f3e7d3', '#ffb35c'], z);
+    bandeau(c, 'GARDE LE DOIGT APPUYE : LE DERNIER A LACHER GAGNE LE JETON, ET TOUT LE MONDE PAIE LE TEMPS TENU.     ', G.sur - 10, 1, '#ffab4d', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -2165,7 +2265,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -2241,7 +2341,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;

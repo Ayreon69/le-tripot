@@ -164,6 +164,7 @@ main {
 .is-remove-one { --c: #aeb8c1; --b: rgba(174, 184, 193, 0.6); }
 .is-balance-mancala { --c: #ff4b3e; --b: rgba(255, 75, 62, 0.55); }
 .is-laying-grass { --c: #8fdc3f; --b: rgba(143, 220, 63, 0.55); }
+.is-time-auction { --c: #ffb35c; --b: rgba(255, 179, 92, 0.55); }
 
 .note {
   max-width: 1320px;
@@ -218,12 +219,14 @@ main {
   .note { font-size: 0.76rem; margin-top: 10px; }
 }
 
-/* Grand écran : deux rangées pleines, de onze, pour laisser au mur toute sa hauteur. */
+/* Grand écran : deux rangées de douze au plus (12 et 11 avec vingt-trois jeux), pour laisser au mur toute sa hauteur. */
 @media (min-width: 1280px) {
-  .jeux { --par-rangee: 11; }
-  .jeu { padding: 12px 10px; }
+  .jeux { --par-rangee: 12; }
+  .jeu { padding: 12px 6px 12px 8px; }
   /* Les boutons ne grandissent plus au-delà de 1440 px (grille de 1320 px) : la police s'arrête avec eux. */
-  .jeu-nom { font-size: clamp(0.9rem, 1.1vw, 1.05rem); }
+  .jeu-nom { font-size: clamp(0.82rem, 1.02vw, 0.875rem); }
+  /* « 3 à 16 joueurs » tient sur une ligne, même à 1280 px. */
+  .jeu-info { font-size: 0.7rem; white-space: nowrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {
