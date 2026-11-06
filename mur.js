@@ -2193,6 +2193,106 @@ const SCENES = {
     ['#ff6b5a', '#ffc93c', '#5fd27a'].forEach((couleur, k) => detoure(c, 'ZOO'[k], x0 + k * 6 * z.e, y0, z.e, couleur));
     bandeau(c, 'MISE EN SECRET AU GUICHET, LE LOT LE MOINS CHER PART, ALIGNE TA SUITE DE TROIS ANIMAUX.     ', G.sur - 10, 1, '#9ef0cf', 28, t);
   },
+  secretnumber(c, t) {
+    const z = zones(['SECRET', 'NUMBER']);
+    // Le plan du réseau, la nuit : fond d'encre et quadrillage à peine visible.
+    c.fillStyle = '#0b0c10';
+    c.fillRect(0, 0, G.w, G.h);
+    c.fillStyle = '#14161c';
+    for (let x = 2; x < G.w; x += 5) c.fillRect(x, 0, 1, G.sur);
+    for (let y = 2; y < G.sur; y += 5) c.fillRect(0, y, G.w, 1);
+    const disque = (x, y, q) => {
+      for (let dy = -q; dy <= q; dy++) {
+        const w = Math.floor(Math.sqrt(q * q - dy * dy + q * 0.6));
+        c.fillRect(x - w, y + dy, 2 * w + 1, 1);
+      }
+    };
+    const trait = (a, b, part, e) => {
+      const pas = Math.max(1, Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+      for (let s = 0; s <= Math.round(pas * part); s++) c.fillRect(Math.round(a.x + ((b.x - a.x) * s) / pas) - (e >> 1), Math.round(a.y + ((b.y - a.y) * s) / pas) - (e >> 1), e, e);
+    };
+    const TEINTES = { plus: '#ff5a44', fois: '#4f8dff', divise: '#1fc48f', zero: '#ffd23a' };
+    // Chaque cycle, trois contacts : deux stations donnent le même ticket, leur ligne s'allume à sa couleur
+    // et le tableau du centre affiche le résultat. Puis les palettes tournent et dévoilent un numéro secret.
+    const CYCLES = [
+      { contacts: [[0, 2, 'plus', '87'], [3, 5, 'divise', '4'], [4, 0, 'fois', '6']], secret: '42' },
+      { contacts: [[1, 3, 'zero', '2'], [0, 4, 'plus', '63'], [2, 4, 'fois', '8']], secret: '17' },
+      { contacts: [[5, 1, 'fois', '5'], [2, 0, 'zero', '3'], [3, 1, 'plus', '91']], secret: '76' },
+    ];
+    const cycle = 8;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const C = CYCLES[n % CYCLES.length];
+    const debut = (k) => 0.05 + k * 0.22;
+    const k = C.contacts.findIndex((_, i) => p >= debut(i) && p < debut(i) + 0.19);
+    const avance = k >= 0 ? (p - debut(k)) / 0.19 : 0;
+    const cx = Math.round(z.ax + z.aw / 2);
+    const cy = Math.round(z.ay + z.ah / 2);
+    const R = Math.floor(Math.min(z.aw, z.ah) / 2) - 1;
+    // Sur un mur trop bas, le tableau seul ; plus bas encore, le nom seul.
+    const plan = R >= 12;
+    const tableau = plan || z.ah >= 9;
+    if (plan) {
+      const st = Array.from({ length: 6 }, (_, i) => {
+        const a = Math.PI / 2 + (i * Math.PI) / 3;
+        return { x: Math.round(cx + Math.cos(a) * R), y: Math.round(cy + Math.sin(a) * R) };
+      });
+      c.fillStyle = '#3a3d46';
+      const tour = Math.max(60, R * 7);
+      for (let i = 0; i < tour; i++) {
+        const a = (i / tour) * Math.PI * 2;
+        c.fillRect(Math.round(cx + Math.cos(a) * R), Math.round(cy + Math.sin(a) * R), 1, 1);
+        if (R >= 18) c.fillRect(Math.round(cx + Math.cos(a) * (R - 1)), Math.round(cy + Math.sin(a) * (R - 1)), 1, 1);
+      }
+      const [a, b, type] = k >= 0 ? C.contacts[k] : [];
+      if (k >= 0) {
+        c.fillStyle = TEINTES[type];
+        trait(st[a], st[b], Math.min(1, avance / 0.35), R >= 22 ? 2 : 1);
+      }
+      // Les stations : un rond de papier ; les deux en contact s'allument, la sienne (en bas) se dévoile à la fin.
+      const rs = Math.max(1, Math.round(R / 10));
+      st.forEach((s, i) => {
+        const lit = k >= 0 && (i === a || i === b) && avance > 0.3;
+        const moi = i === 0 && p >= 0.8;
+        c.fillStyle = moi ? '#ffe14a' : '#f1ede4';
+        disque(s.x, s.y, rs + 1);
+        if (rs >= 2) {
+          c.fillStyle = lit ? TEINTES[type] : moi ? '#ffe14a' : '#0b0c10';
+          disque(s.x, s.y, rs - 1);
+        } else if (lit) {
+          c.fillStyle = TEINTES[type];
+          c.fillRect(s.x, s.y, 1, 1);
+        }
+      });
+    }
+    // Le tableau d'affichage : deux palettes, « ?? » le plus souvent.
+    const e = Math.max(1, plan ? Math.floor((R * 1.05 - 3) / 11) : Math.min(Math.floor((z.aw - 3) / 11), Math.floor((z.ah - 1) / 9)));
+    const x0 = Math.round(cx - (11 * e + 3) / 2 + 1);
+    const y0 = Math.round(cy - (7 * e) / 2);
+    let mot = '??';
+    let couleur = '#cfc9bb';
+    if (k >= 0 && avance > 0.35) {
+      mot = C.contacts[k][3].padStart(2, ' ');
+      couleur = TEINTES[C.contacts[k][2]];
+    } else if (p >= 0.74 && p < 0.8) {
+      mot = `${Math.floor(t * 17) % 10}${Math.floor(t * 23 + 4) % 10}`;
+      couleur = '#f1ede4';
+    } else if (p >= 0.8) {
+      mot = C.secret;
+      couleur = p < 0.86 && Math.floor(t * 8) % 2 ? '#fff6c8' : '#ffe14a';
+    }
+    if (tableau) [...mot].forEach((ch, i) => {
+      const x = x0 + i * (6 * e + 1);
+      c.fillStyle = '#232731';
+      c.fillRect(x - 1, y0 - e, 5 * e + 2, 9 * e);
+      c.fillStyle = couleur;
+      texte(c, ch, x, y0, e);
+      c.fillStyle = '#050608';
+      c.fillRect(x - 1, y0 + Math.floor(3.5 * e), 5 * e + 2, 1);
+    });
+    nom(c, ['SECRET', 'NUMBER'], ['#f1ede4', '#ffe14a'], z);
+    bandeau(c, "PERSONNE NE CONNAIT SON NUMERO : DONNE LE MEME TICKET QU'UN AUTRE, NOTE LE RESULTAT ET DEVINE TOUT LE MONDE.     ", G.sur - 10, 1, '#ffe14a', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -2363,7 +2463,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -2439,7 +2539,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
