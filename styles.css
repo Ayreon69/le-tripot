@@ -165,6 +165,7 @@ main {
 .is-balance-mancala { --c: #ff4b3e; --b: rgba(255, 75, 62, 0.55); }
 .is-laying-grass { --c: #8fdc3f; --b: rgba(143, 220, 63, 0.55); }
 .is-time-auction { --c: #ffb35c; --b: rgba(255, 179, 92, 0.55); }
+.is-zoo { --c: #9ef0cf; --b: rgba(158, 240, 207, 0.55); }
 
 .note {
   max-width: 1320px;
@@ -174,7 +175,7 @@ main {
   color: #8e8e99;
 }
 
-/* Téléphone : vingt-deux jeux font huit rangées. On les serre pour laisser au mur de quoi jouer sa scène. */
+/* Téléphone : vingt-quatre jeux font huit rangées de trois. On les serre pour laisser au mur de quoi jouer sa scène. */
 @media (max-width: 759px) {
   .jeux { --ecart: 6px; }
   .jeu { min-height: 56px; padding: 6px 9px; }
@@ -195,7 +196,7 @@ main {
 
 @media (min-width: 760px) {
   main { padding: 0 24px max(12px, env(safe-area-inset-bottom)); }
-  /* Huit par rangée : les vingt-deux jeux tiennent en trois rangées (8, 8, et 6 au centre) et laissent de la hauteur au mur. */
+  /* Huit par rangée : les vingt-quatre jeux tiennent en trois rangées pleines et laissent de la hauteur au mur. */
   .jeux {
     --par-rangee: 8;
     --ecart: 14px;
@@ -219,7 +220,7 @@ main {
   .note { font-size: 0.76rem; margin-top: 10px; }
 }
 
-/* Grand écran : deux rangées de douze au plus (12 et 11 avec vingt-trois jeux), pour laisser au mur toute sa hauteur. */
+/* Grand écran : deux rangées de douze au plus (deux pleines avec vingt-quatre jeux), pour laisser au mur toute sa hauteur. */
 @media (min-width: 1280px) {
   .jeux { --par-rangee: 12; }
   .jeu { padding: 12px 6px 12px 8px; }

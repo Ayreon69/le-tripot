@@ -2095,6 +2095,104 @@ const SCENES = {
     nom(c, ['TIME', 'AUCTION'], ['#f3e7d3', '#ffb35c'], z);
     bandeau(c, 'GARDE LE DOIGT APPUYE : LE DERNIER A LACHER GAGNE LE JETON, ET TOUT LE MONDE PAIE LE TEMPS TENU.     ', G.sur - 10, 1, '#ffab4d', 28, t);
   },
+  zoo(c, t) {
+    const z = zones(['ZOO']);
+    const q = Math.max(2, Math.floor(Math.min(z.aw, z.ah - 2) / 5));
+    const gx = Math.round(z.ax + (z.aw - 5 * q) / 2);
+    const gy = Math.round(z.ay + (z.ah - 5 * q) / 2);
+    // La salle de jeux la nuit : le papier peint à rayures menthe, à peine éclairé.
+    c.fillStyle = '#0a1511';
+    c.fillRect(0, 0, G.w, G.h);
+    c.fillStyle = '#0e1d17';
+    for (let x = 0; x < G.w; x += 6) c.fillRect(x, 0, 3, G.sur);
+    // Le casier de hêtre et ses vingt-cinq cases.
+    const b = q >= 5 ? 2 : 1;
+    c.fillStyle = '#7a5530';
+    c.fillRect(gx - b, gy - b, 5 * q + 2 * b, 5 * q + 2 * b);
+    c.fillStyle = '#3a2614';
+    c.fillRect(gx, gy, 5 * q, 5 * q);
+    const creux = q >= 3 ? q - 1 : q;
+    c.fillStyle = '#1b1109';
+    for (let j = 0; j < 5; j++) for (let i = 0; i < 5; i++) c.fillRect(gx + i * q, gy + j * q, creux, creux);
+    // Les cubes peints : serpent, perroquet, éléphant, lion, singe, avec leur autocollant clair au milieu.
+    const TEINTES = { S: ['#3faa55', '#23793a'], P: ['#e8473b', '#a92a22'], E: ['#3c7fd8', '#24569e'], L: ['#f6b326', '#b97f0c'], M: ['#9058c8', '#633695'] };
+    const cube = (x, y, a) => {
+      const [teinte, ombre] = TEINTES[a];
+      c.fillStyle = teinte;
+      c.fillRect(x, y, creux, creux);
+      if (q >= 4) {
+        c.fillStyle = ombre;
+        c.fillRect(x, y + creux - 1, creux, 1);
+        c.fillRect(x + creux - 1, y, 1, creux);
+        const f = Math.max(1, Math.round(creux * 0.4));
+        c.fillStyle = '#fff3dc';
+        c.fillRect(x + Math.floor((creux - f) / 2), y + Math.floor((creux - f) / 2), f, f);
+      }
+    };
+    // Trois lots de quatre, chacun lâché colonne par colonne ; les cubes tombent tout en bas.
+    // Le serpent, le perroquet et l'éléphant finissent en diagonale : la suite est alignée. Un cycle sur deux, en miroir.
+    const LOTS = [
+      [[2, 'L'], [1, 'M'], [0, 'S'], [4, 'P']],
+      [[2, 'M'], [3, 'L'], [1, 'P'], [4, 'E']],
+      [[3, 'S'], [0, 'L'], [2, 'E'], [3, 'M']],
+    ];
+    const SUITE = [[0, 0], [1, 1], [2, 2]];
+    const cycle = 7.6;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const miroir = n % 2 === 1;
+    const col = (i) => (miroir ? 4 - i : i);
+    const sortie = Math.max(0, Math.min(1, (p - 0.93) / 0.07));
+    const fuite = Math.round(sortie * sortie * (G.sur - gy + 2));
+    const haut = [0, 0, 0, 0, 0];
+    c.save();
+    c.beginPath();
+    c.rect(gx, 0, 5 * q, gy + 5 * q);
+    c.clip();
+    LOTS.forEach((lot, l) => {
+      lot.forEach(([i, a], k) => {
+        const rang = haut[i]++;
+        const chute = Math.max(0, Math.min(1, (p - 0.04 - l * 0.2 - k * 0.045) / 0.045));
+        if (chute === 0) return;
+        const y = gy + (4 - rang) * q;
+        const depart = -q;
+        cube(gx + col(i) * q, Math.round(depart + (y - depart) * chute * chute) + fuite, a);
+      });
+    });
+    c.restore();
+    // La suite s'allume : les trois cases s'encadrent en clignotant, un trait les relie, et « +1 » s'affiche.
+    if (p > 0.66 && sortie === 0 && (p > 0.72 || Math.floor(t * 10) % 2 === 0)) {
+      c.fillStyle = '#ffe07a';
+      const centres = SUITE.map(([i, r]) => [gx + col(i) * q + Math.floor(creux / 2), gy + (4 - r) * q + Math.floor(creux / 2)]);
+      SUITE.forEach(([i, r]) => {
+        const x = gx + col(i) * q;
+        const y = gy + (4 - r) * q;
+        c.fillRect(x - 1, y - 1, creux + 2, 1);
+        c.fillRect(x - 1, y + creux, creux + 2, 1);
+        c.fillRect(x - 1, y, 1, creux);
+        c.fillRect(x + creux, y, 1, creux);
+      });
+      const [x1, y1] = centres[0];
+      const [x2, y2] = centres[2];
+      const pas = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
+      const e = q >= 8 ? 2 : 1;
+      c.fillStyle = '#fff3dc';
+      for (let s = 0; s <= pas; s++) c.fillRect(Math.round(x1 + ((x2 - x1) * s) / pas), Math.round(y1 + ((y2 - y1) * s) / pas), e, e);
+      // « +1 » flotte au-dessus de l'éléphant, dans la rangée vide du milieu : la colonne du centre ne bouge pas en miroir.
+      if (p > 0.76 && 3 * q >= largeur('+1') + 2) {
+        const eg = Math.max(1, Math.min(Math.floor((3 * q - 2) / largeur('+1')), Math.floor(q / 7)));
+        const cx = gx + 2 * q + creux / 2;
+        const cy = gy + q + creux / 2;
+        detoure(c, '+1', Math.round(cx - largeur('+1', eg) / 2), Math.round(cy - (7 * eg) / 2), eg, '#ffe07a');
+      }
+    }
+    // Le nom, en trois cubes comme le logo du jeu : Z rouge, O jaune, O vert.
+    const h = 9 * z.e;
+    const x0 = Math.round(z.tx - largeur('ZOO', z.e) / 2);
+    const y0 = Math.round(z.ty - h / 2 + z.e);
+    ['#ff6b5a', '#ffc93c', '#5fd27a'].forEach((couleur, k) => detoure(c, 'ZOO'[k], x0 + k * 6 * z.e, y0, z.e, couleur));
+    bandeau(c, 'MISE EN SECRET AU GUICHET, LE LOT LE MOINS CHER PART, ALIGNE TA SUITE DE TROIS ANIMAUX.     ', G.sur - 10, 1, '#9ef0cf', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -2265,7 +2363,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -2341,7 +2439,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
