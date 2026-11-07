@@ -167,6 +167,7 @@ main {
 .is-time-auction { --c: #ffb35c; --b: rgba(255, 179, 92, 0.55); }
 .is-zoo { --c: #9ef0cf; --b: rgba(158, 240, 207, 0.55); }
 .is-secret-number { --c: #ffe14a; --b: rgba(255, 225, 74, 0.55); }
+.is-loup-garou { --c: #b8adff; --b: rgba(184, 173, 255, 0.55); }
 
 .note {
   max-width: 1320px;

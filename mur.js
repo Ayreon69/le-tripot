@@ -2293,6 +2293,179 @@ const SCENES = {
     nom(c, ['SECRET', 'NUMBER'], ['#f1ede4', '#ffe14a'], z);
     bandeau(c, "PERSONNE NE CONNAIT SON NUMERO : DONNE LE MEME TICKET QU'UN AUTRE, NOTE LE RESULTAT ET DEVINE TOUT LE MONDE.     ", G.sur - 10, 1, '#ffe14a', 28, t);
   },
+  loupgarou(c, t) {
+    const z = zones(['LOUP', 'GAROU']);
+    // Une nuit en neuf secondes : le loup hurle, le village ferme les yeux, deux cartes changent de place,
+    // la carte du milieu se retourne sur un Loup-Garou, puis l'aube rosit le ciel et les fenêtres se rallument.
+    const cycle = 9;
+    const p = (t % cycle) / cycle;
+    const lisse = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+    const hasard = (n) => {
+      const s = Math.sin(n * 91.345) * 47453.13;
+      return s - Math.floor(s);
+    };
+    const aube = lisse((p - 0.8) / 0.12);
+    const gy = z.ay + z.ah - Math.max(2, Math.round(z.ah * 0.12));
+    c.fillStyle = '#0b0914';
+    c.fillRect(0, 0, G.w, G.h);
+    // Le ciel du jeu, de l'indigo à l'horizon violet ; à l'aube, du mauve à l'orangé.
+    const NUIT = [[16, 14, 40], [39, 34, 87], [64, 54, 120]];
+    const AUBE = [[42, 37, 89], [122, 74, 108], [233, 162, 90]];
+    const teinte = (pal, k) => (k < 0.55 ? pal[0].map((v, i) => v + ((pal[1][i] - v) * k) / 0.55) : pal[1].map((v, i) => v + ((pal[2][i] - v) * (k - 0.55)) / 0.45));
+    for (let y = 0; y < gy; y++) {
+      const k = Math.min(1, y / Math.max(1, gy - 1));
+      const a = teinte(NUIT, k);
+      const b = teinte(AUBE, k);
+      c.fillStyle = `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * aube)).join(',')})`;
+      c.fillRect(0, y, G.w, 1);
+    }
+    // Les étoiles scintillent et s'effacent au lever du jour.
+    const nb = Math.floor((G.w * gy) / 70);
+    for (let i = 0; i < nb; i++) {
+      const x = Math.floor(hasard(i + 1) * G.w);
+      const y = Math.floor(hasard(i * 1.7 + 3) * (gy - 3));
+      const b = 0.5 + 0.5 * Math.sin(t * 1.7 + i * 2.3);
+      c.fillStyle = `rgba(246,231,191,${((0.2 + 0.65 * b) * (1 - aube)).toFixed(3)})`;
+      c.fillRect(x, y, 1, 1);
+    }
+    const disque = (x, y, q) => {
+      for (let dy = -q; dy <= q; dy++) {
+        const w = Math.floor(Math.sqrt(q * q - dy * dy + q * 0.6));
+        c.fillRect(x - w, y + dy, 2 * w + 1, 1);
+      }
+    };
+    // La lune, avec son halo et ses cratères ; elle descend et pâlit à l'aube.
+    const mr = Math.max(3, Math.round(Math.min(z.aw, z.ah) * 0.17));
+    const mx = z.ax + Math.round(z.aw * 0.82);
+    const my = z.ay + Math.round(z.ah * 0.25 + aube * z.ah * 0.3);
+    c.globalAlpha = 1 - aube * 0.85;
+    c.fillStyle = 'rgba(246,231,191,0.13)';
+    disque(mx, my, mr + Math.max(2, Math.round(mr / 3)));
+    c.fillStyle = '#f6e7bf';
+    disque(mx, my, mr);
+    if (mr >= 5) {
+      c.fillStyle = '#e3cf9c';
+      disque(mx - Math.round(mr * 0.35), my - Math.round(mr * 0.2), Math.max(1, Math.round(mr * 0.22)));
+      disque(mx + Math.round(mr * 0.3), my + Math.round(mr * 0.35), Math.max(1, Math.round(mr * 0.14)));
+      c.fillRect(mx + Math.round(mr * 0.25), my - Math.round(mr * 0.5), 1, 1);
+    }
+    c.globalAlpha = 1;
+    // Le sol, en une colline douce sur toute la largeur.
+    c.fillStyle = '#0b0914';
+    for (let x = 0; x < G.w; x++) {
+      const y = gy + Math.round(Math.sin(x * 0.07 + 1) * 1.2);
+      c.fillRect(x, y, 1, G.h - y);
+    }
+    // Le village : des maisons et un clocher ; chaque fenêtre s'éteint quand tout le monde ferme les yeux.
+    const s = Math.max(1, Math.floor(z.ah / 40));
+    // Sur un mur bas (téléphone), le village se tasse pour laisser le ciel à la lune et aux cartes.
+    const hs = Math.min(s, (z.ah * 0.55) / 19);
+    const MAISONS = [[0.5, 7, 6], [0.6, 3, 13, true], [0.69, 9, 8], [0.8, 5, 5], [0.88, 7, 7], [0.96, 5, 5]];
+    MAISONS.forEach(([fx, w0, h0, clocher], i) => {
+      const w = w0 * s;
+      const h = Math.max(2, Math.round(h0 * hs));
+      const x = z.ax + Math.round(z.aw * fx) - (w >> 1);
+      if (x + w > z.ax + z.aw + 2) return;
+      c.fillStyle = '#0b0914';
+      c.fillRect(x, gy - h, w, h + 2);
+      const toit = clocher ? Math.max(2, Math.round(4 * hs)) : Math.ceil(w / 2);
+      for (let r = 0; r < toit; r++) {
+        const retrait = clocher ? Math.floor((r * w) / (2 * toit)) : r;
+        if (w - 2 * retrait > 0) c.fillRect(x + retrait, gy - h - 1 - r, w - 2 * retrait, 1);
+      }
+      const fleche = Math.max(1, Math.round(2 * hs));
+      if (clocher) c.fillRect(x + (w >> 1), gy - h - toit - fleche, 1, fleche);
+      const eteinte = p >= 0.3 + i * 0.025 && p < 0.88 + i * 0.012;
+      c.fillStyle = eteinte ? '#221d38' : '#ffcf7a';
+      const fy = gy - Math.round(h * (clocher ? 0.7 : 0.6));
+      c.fillRect(x + Math.floor((w - s) / 2), fy, s, s);
+      if (!clocher && w0 >= 7 && h >= 6) c.fillRect(x + Math.floor(w / 4) - (s >> 1), gy - Math.round(h * 0.3) - s, s, s);
+    });
+    // Le loup, assis sur la colline, lève la tête et hurle à la lune.
+    if (z.ah >= 17 && z.aw >= 40) {
+      const ws = Math.max(1, Math.floor(z.ah / 28));
+      const CORPS = ['....#####.....', '....#####.....', '...######.....', '...#######....', '..########....', '..#####.##....', '.######.##....', '.######.##....', '#######.##....', '###.###.###...'];
+      const HURLE = ['..........#...', '.........##...', '...#....###...', '...##..###....', '...#######....', '....#####.....', '....####......'];
+      const ASSIS = ['..............', '..............', '...#..........', '...##.........', '...######.....', '...#########..', '....#####.....'];
+      const hurle = p >= 0.1 && p < 0.3;
+      const wx = z.ax + 2;
+      const wy = gy - 16 * ws + 1;
+      c.fillStyle = '#0b0914';
+      [...(hurle ? HURLE : ASSIS), ...CORPS].forEach((r, j) => {
+        for (let i = 0; i < r.length; i++) if (r[i] === '#') c.fillRect(wx + i * ws, wy + j * ws, ws, ws);
+      });
+      if (!hurle) {
+        c.fillStyle = p >= 0.46 && p < 0.8 && Math.floor(t * 3) % 4 ? '#ffe9b8' : '#ffd36a';
+        c.fillRect(wx + 6 * ws, wy + 4 * ws, ws, ws);
+      } else {
+        // Le hurlement : des ondes qui partent du museau vers la lune.
+        const bx = wx + 11 * ws;
+        const by = wy;
+        for (let k = 0; k < 3; k++) {
+          const d = (((t * 10) % 4) + k * 4) * ws + 2;
+          c.fillStyle = `rgba(246,231,191,${Math.max(0, 0.75 - d / (16 * ws)).toFixed(3)})`;
+          for (let j = -ws - 1; j <= ws + 1; j++) c.fillRect(Math.round(bx + d * 0.7 + j * 0.7), Math.round(by - d * 0.7 + j * 0.7), 1, 1);
+        }
+      }
+    }
+    // Les cartes de la nuit : les deux du bord s'échangent, celle du milieu se retourne sur un Loup-Garou.
+    if (z.ah >= 18) {
+      const cs = Math.max(1, Math.floor(z.ah / 30));
+      const cw = 5 * cs + 2;
+      const ch = 7 * cs + 2;
+      const pas = cw + cs + 1;
+      const ccx = z.ax + Math.round(z.aw * 0.5);
+      const ccy = z.ay + Math.round(z.ah * 0.45);
+      const vu = Math.min(1, (p - 0.46) / 0.05, (0.84 - p) / 0.05);
+      const TETE_LOUP = ['#...#', '##.##', '#####', '#.#.#', '#####', '.###.', '..#..'];
+      if (vu > 0) {
+        c.globalAlpha = vu;
+        const f = lisse((p - 0.52) / 0.12);
+        const tourne = lisse((p - 0.67) / 0.06);
+        [0, 2, 1].forEach((i) => {
+          let x = ccx + (i - 1) * pas;
+          let y = ccy - Math.round((1 - lisse(vu)) * 3 * cs);
+          let large = cw;
+          let face = false;
+          if (i !== 1) {
+            const sens = i === 0 ? 1 : -1;
+            x += Math.round(sens * 2 * pas * f);
+            y -= Math.round(Math.sin(Math.PI * f) * ch * 0.7 * sens);
+          } else {
+            large = Math.max(1, Math.round(cw * Math.abs(1 - 2 * tourne)));
+            face = tourne >= 0.5;
+            if (face && p < 0.8) {
+              const halo = 0.5 + 0.5 * Math.sin(t * 6);
+              c.fillStyle = `rgba(207,74,67,${(0.25 + 0.25 * halo).toFixed(3)})`;
+              c.fillRect(x - (large >> 1) - cs, y - (ch >> 1) - cs, large + 2 * cs, ch + 2 * cs);
+            }
+          }
+          const x0 = x - (large >> 1);
+          const y0 = y - (ch >> 1);
+          c.fillStyle = face ? '#f7ecd6' : '#f2c27a';
+          c.fillRect(x0, y0, large, ch);
+          if (face) {
+            if (large >= cw - 1) {
+              c.fillStyle = '#cf4a43';
+              TETE_LOUP.forEach((r, j) => {
+                for (let k = 0; k < 5; k++) if (r[k] === '#') c.fillRect(x0 + 1 + k * cs, y0 + 1 + j * cs, cs, cs);
+              });
+            }
+          } else if (large > 2) {
+            c.fillStyle = '#25214c';
+            c.fillRect(x0 + 1, y0 + 1, large - 2, ch - 2);
+            if (large >= cw - 1) {
+              c.fillStyle = '#f6e7bf';
+              c.fillRect(x0 + 1 + 2 * cs, y0 + 1 + 3 * cs, cs, cs);
+            }
+          }
+        });
+        c.globalAlpha = 1;
+      }
+    }
+    nom(c, ['LOUP', 'GAROU'], ['#f6e7bf', '#f2c27a'], z);
+    bandeau(c, "LA NUIT, CHACUN RECOIT UN ROLE ET LES CARTES CHANGENT DE MAIN. AU MATIN, UN SEUL VOTE : TROUVE LE LOUP-GAROU.     ", G.sur - 10, 1, '#f2c27a', 28, t);
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -2463,7 +2636,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -2539,7 +2712,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
