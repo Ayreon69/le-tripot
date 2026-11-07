@@ -2620,6 +2620,188 @@ const SCENES = {
     c.globalAlpha = 1;
     finir();
   },
+  mafia(c, t) {
+    const z = zones(['MAFIA', 'DE CUBA']);
+    // La Havane, 1957, la nuit sur le patio. La boîte à cigares du Parrain glisse sur la table de chapeau en chapeau,
+    // et des diamants s'envolent dans des poches. Puis la lampe s'allume, cherche, s'arrête : les poches se vident.
+    const cycle = 10;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const lisse = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+    // Le ciel de nuit, sarcelle sombre, sur tout le mur.
+    for (let y = 0; y < G.h; y++) {
+      const k = Math.min(1, y / Math.max(1, G.sur));
+      c.fillStyle = `rgb(${Math.round(9 + 16 * k)},${Math.round(24 + 34 * k)},${Math.round(28 + 30 * k)})`;
+      c.fillRect(0, y, G.w, 1);
+    }
+    // Le carrelage du patio, sous le bandeau : carreaux de ciment sarcelle et terre cuite.
+    const sol = G.sur - 13;
+    for (let y = sol; y < G.h; y++)
+      for (let x = 0; x < G.w; x++) {
+        const a = (Math.floor(x / 3) + Math.floor((y - sol) / 3)) % 2;
+        c.fillStyle = a ? '#1f6a61' : '#9c4a31';
+        c.fillRect(x, y, 1, 1);
+      }
+    // La guirlande d'ampoules, d'un bord à l'autre, qui scintille.
+    const AMPOULES = ['#ffd36a', '#ff8a5c', '#9fe3d6', '#f6ead2'];
+    for (let x = 0; x < G.w; x++) {
+      const u = x / Math.max(1, G.w - 1) - 0.5;
+      const y = 1 + Math.round(2 * (1 - 4 * u * u));
+      c.fillStyle = '#2c2a1e';
+      c.fillRect(x, y, 1, 1);
+      if (x % 5 === 2) {
+        const k = Math.floor(x / 5);
+        c.fillStyle = Math.sin(t * 2.3 + k * 1.7) > -0.6 ? AMPOULES[k % AMPOULES.length] : '#4a4630';
+        c.fillRect(x, y + 1, 1, 1);
+      }
+    }
+    // Quelques étoiles au-dessus du patio, qui scintillent.
+    for (let k = 0; k < Math.floor(G.w / 7); k++) {
+      const a = Math.sin(k * 78.233) * 43758.545;
+      const b = Math.sin(k * 12.9898 + 4.1) * 43758.545;
+      if (Math.sin(t * 1.3 + k * 2.1) < -0.3) continue;
+      c.fillStyle = k % 3 ? '#5f7f86' : '#c9dde0';
+      c.fillRect(Math.floor((a - Math.floor(a)) * G.w), 6 + Math.floor((b - Math.floor(b)) * Math.max(1, G.sur * 0.45)), 1, 1);
+    }
+    const finir = () => {
+      nom(c, ['MAFIA', 'DE CUBA'], ['#ff6ad5', '#f6ead2'], z);
+      bandeau(c, "LA BOITE A CIGARES DU PARRAIN FAIT LE TOUR DE LA TABLE ET REVIENT ALLEGEE DE QUELQUES DIAMANTS. A LUI DE TROUVER LES VOLEURS, A TOI DE MENTIR JUSTE.     ", G.sur - 10, 1, '#ff6ad5', 28, t);
+    };
+    // Sur un mur trop bas, pas de table : le ciel, la guirlande et le nom.
+    if (z.ah < 12 || z.aw < 30) return finir();
+    // Quatre joueurs derrière la table, en feutre et costume : le Parrain à gauche (feutre crème, cigare), puis trois autres.
+    const nb = 4;
+    const pas = Math.floor(z.aw / nb);
+    const s = Math.max(1, Math.min(Math.floor(z.ah / 14), Math.floor(pas / 9)));
+    const table = z.ay + z.ah - 2 * s;
+    const px = (i) => z.ax + Math.floor(pas * (i + 0.5));
+    // h : feutre, b : ruban, f : visage, y : yeux, s : costume, w : chemise.
+    const SILHOUETTE = ['..hhh..', '..bbb..', 'hhhhhhh', '..yfy..', '..fff..', '.sswss.', 'sssssss'];
+    const GENS = [
+      { h: '#efe3c6', b: '#1d1a17', f: '#d9a47a', s: '#3b3f4a' },
+      { h: '#8d939c', b: '#2a9d8f', f: '#a8714a', s: '#2b3346' },
+      { h: '#b07c4f', b: '#d63d2f', f: '#e6b98f', s: '#3a2f2a' },
+      { h: '#5a78a8', b: '#e9c46a', f: '#8a5634', s: '#2f3b33' },
+    ];
+    const SERIES = [
+      { voleurs: [1, 3], accuse: 3 },
+      { voleurs: [2], accuse: 2 },
+      { voleurs: [1, 2], accuse: 1 },
+    ];
+    const S = SERIES[n % SERIES.length];
+    const fin = p >= 0.92 ? 1 - lisse((p - 0.92) / 0.06) : 1;
+    // La boîte : quatre arrêts, un par chapeau, puis retour au Parrain.
+    const arret = (k) => 0.04 + k * 0.12;
+    let bx = px(0);
+    let ouverte = false;
+    let ici = -1;
+    for (let k = 0; k < nb; k++) {
+      const a = arret(k);
+      if (p >= a && p < a + 0.08) {
+        bx = px(k);
+        ici = k;
+        ouverte = k > 0 && p >= a + 0.015 && p < a + 0.065;
+      } else if (p >= a + 0.08 && k < nb - 1 && p < arret(k + 1)) bx = Math.round(px(k) + (px(k + 1) - px(k)) * lisse((p - a - 0.08) / 0.04));
+    }
+    if (p >= arret(nb - 1) + 0.08) bx = Math.round(px(nb - 1) + (px(0) - px(nb - 1)) * lisse((p - arret(nb - 1) - 0.08) / 0.08));
+    // Les diamants restés dans la boîte, et ceux qui s'envolent vers une poche.
+    const pris = S.voleurs.filter((v) => p >= arret(v) + 0.04).length;
+    // La lampe : elle s'allume, balaie les chapeaux, puis s'arrête sur l'accusé.
+    const lampe = p >= 0.58 && p < 0.92;
+    const cible = p < 0.72 ? px(1) + (px(nb - 1) - px(1)) * (0.5 - 0.5 * Math.cos(((p - 0.58) / 0.14) * Math.PI * 2.5)) : px(S.accuse);
+    const lx = z.ax + Math.floor(z.aw / 2);
+    const ly = z.ay + s;
+    // La lampe suspendue au-dessus de la table : éteinte pendant la tournée de la boîte.
+    c.fillStyle = '#2c2a1e';
+    c.fillRect(lx, 4, 1, Math.max(0, ly - 4));
+    c.fillStyle = '#1f6a61';
+    c.fillRect(lx - 2 * s, ly, 4 * s + 1, s);
+    c.fillStyle = lampe ? '#ffe9a8' : '#4a4630';
+    c.fillRect(lx - s, ly + s, 2 * s + 1, Math.max(1, s >> 1));
+    c.globalAlpha = fin;
+    if (lampe) {
+      const allume = Math.min(1, (p - 0.58) / 0.03);
+      c.fillStyle = `rgba(255,226,140,${(0.26 * allume).toFixed(3)})`;
+      const hw = 4 * s + 1;
+      for (let y = ly + s + 1; y < table; y++) {
+        const k = (y - ly) / Math.max(1, table - ly);
+        const cx = lx + (cible - lx) * k;
+        const w = Math.max(1, Math.round(hw * k));
+        c.fillRect(Math.round(cx - w), y, 2 * w + 1, 1);
+      }
+    }
+    // Les joueurs. Celui qui est sous la lampe s'éclaire ; quand elle cherche, les regards suivent.
+    const vide = p >= 0.74 && p < 0.92;
+    for (let i = 0; i < nb; i++) {
+      const x0 = px(i) - Math.floor((7 * s) / 2);
+      const y0 = table - 7 * s;
+      const eclaire = lampe && Math.abs(cible - px(i)) <= 2 * s;
+      const g = GENS[i];
+      SILHOUETTE.forEach((r, j) => {
+        for (let k = 0; k < 7; k++) {
+          const q = r[k];
+          if (q === '.') continue;
+          c.fillStyle = q === 'h' ? g.h : q === 'b' ? g.b : q === 'f' ? g.f : q === 'w' ? '#f6ead2' : q === 'y' ? '#1d1a17' : eclaire ? '#7a6a48' : g.s;
+          c.fillRect(x0 + k * s, y0 + j * s, s, s);
+        }
+      });
+      // Le cigare du Parrain, qui rougeoie.
+      if (i === 0) {
+        c.fillStyle = '#7a4122';
+        c.fillRect(x0 + 5 * s, y0 + 4 * s, s, Math.max(1, s >> 1));
+        c.fillStyle = Math.sin(t * 3) > 0 ? '#ff7b3a' : '#c2502a';
+        c.fillRect(x0 + 6 * s, y0 + 4 * s, s, Math.max(1, s >> 1));
+      }
+      // L'accusé vide ses poches : des diamants tombent sur la table, et un « ! » rouge clignote.
+      if (vide && i === S.accuse) {
+        for (let k = 0; k < 3; k++) {
+          const q = (((p - 0.74) / 0.18) * 3 + k / 3) % 1;
+          c.fillStyle = k % 2 ? '#bfe9f5' : '#ffffff';
+          c.fillRect(x0 + (2 + k) * s, y0 + 5 * s + Math.round(q * 2 * s), s, s);
+        }
+        if (y0 - 9 >= z.ay && Math.floor(t * 4) % 2) detoure(c, '!', px(i) - 2, y0 - 9, 1, '#ff4d3d');
+      }
+    }
+    // La table, en cèdre.
+    c.fillStyle = '#7a4122';
+    c.fillRect(z.ax, table, z.aw, s);
+    c.fillStyle = '#4e2914';
+    c.fillRect(z.ax, table + s, z.aw, s);
+    // La boîte à cigares, posée devant le chapeau qui la tient.
+    if (p < 0.6) {
+      const bw = 8 * s + 2;
+      const bh = 3 * s + 2;
+      const x0 = bx - (bw >> 1);
+      const y0 = table - bh;
+      c.fillStyle = '#9a5631';
+      c.fillRect(x0, y0, bw, bh);
+      c.fillStyle = '#d63d2f';
+      c.fillRect(x0, y0 + (bh >> 1), bw, Math.max(1, s));
+      c.fillStyle = '#e9c46a';
+      c.fillRect(bx - s, y0 + (bh >> 1) - (s >> 1), 2 * s, s + 1);
+      if (ouverte) {
+        // Le couvercle levé, et les diamants qui restent.
+        c.fillStyle = '#c47a4a';
+        c.fillRect(x0, y0 - 2 * s - 1, bw, s + 1);
+        c.fillStyle = '#2a160c';
+        c.fillRect(x0 + 1, y0 - s, bw - 2, s);
+        for (let k = 0; k < 5 - pris; k++) {
+          c.fillStyle = k % 2 ? '#bfe9f5' : '#ffffff';
+          c.fillRect(x0 + 1 + k * 2 * s, y0 - s, s, s);
+        }
+      }
+      // Un diamant s'envole de la boîte vers la poche d'un voleur.
+      if (ici > 0 && S.voleurs.includes(ici)) {
+        const q = (p - arret(ici) - 0.03) / 0.03;
+        if (q > 0 && q < 1) {
+          c.fillStyle = '#ffffff';
+          c.fillRect(bx + Math.round(Math.sin(q * Math.PI) * 2 * s), Math.round(y0 - 2 * s - Math.sin(q * Math.PI) * 3 * s + q * 4 * s), s, s);
+        }
+      }
+    }
+    c.globalAlpha = 1;
+    finir();
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -2790,7 +2972,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito', 'mafia'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -2866,7 +3048,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48], mafia: [1, 0.42, 0.84] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
