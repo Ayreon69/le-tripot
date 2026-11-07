@@ -171,6 +171,7 @@ main {
 .is-ito { --c: #ff9e7a; --b: rgba(255, 158, 122, 0.55); }
 .is-mafia-de-cuba { --c: #ff6ad5; --b: rgba(255, 106, 213, 0.55); }
 .is-frise { --c: #a8d4ff; --b: rgba(168, 212, 255, 0.55); }
+.is-disgrace { --c: #e6a3d8; --b: rgba(230, 163, 216, 0.55); }
 
 .note {
   max-width: 1320px;

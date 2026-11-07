@@ -2929,6 +2929,126 @@ const SCENES = {
     c.globalAlpha = 1;
     finir();
   },
+  disgrace(c, t) {
+    const z = zones(['DISGRACE']);
+    // Le salon de la Duchesse en sept secondes : trois Maisons de part et d'autre d'une table dorée, la lumière au-dessus,
+    // l'ombre en dessous. Une carte arrive dans une colonne, en haut ou en bas, puis le cachet tombe : + en or (en grâce), - en cire rouge (en disgrâce).
+    const cycle = 7;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const lisse = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+    const MAISONS = ['#e0507e', '#28b4b9', '#6cc062'];
+    const SERIES = [
+      { col: [[2, 1], [1, 2], [1, 1]], actif: 1, haut: true },
+      { col: [[1, 2], [2, 1], [1, 1]], actif: 0, haut: false },
+      { col: [[1, 1], [1, 1], [2, 2]], actif: 2, haut: false },
+      { col: [[2, 2], [1, 1], [1, 2]], actif: 0, haut: true },
+    ];
+    const S = SERIES[n % SERIES.length];
+    const [hautA, basA] = S.col[S.actif];
+    const grace = S.haut ? hautA + 1 > basA : hautA > basA + 1;
+    // La lumière du lustre en haut, l'ombre bleue en bas, et un semis de damas d'or.
+    const milieu = z.ay + Math.round(z.ah / 2);
+    for (let y = 0; y < G.h; y++) {
+      if (y < milieu) {
+        const k = Math.max(0, 1 - y / Math.max(1, milieu));
+        c.fillStyle = `rgb(${Math.round(52 + 60 * k)},${Math.round(22 + 34 * k)},${Math.round(50 + 6 * k)})`;
+      } else {
+        const k = Math.min(1, (y - milieu) / Math.max(1, G.h - milieu));
+        c.fillStyle = `rgb(${Math.round(24 - 8 * k)},${Math.round(28 - 8 * k)},${Math.round(62 - 20 * k)})`;
+      }
+      c.fillRect(0, y, G.w, 1);
+    }
+    c.fillStyle = '#7a5a2e';
+    for (let y = 2; y < G.sur - 12; y += 8) for (let x = (y / 8) % 2 ? 2 : 6; x < G.w; x += 8) c.fillRect(x, y, 1, 1);
+    const finir = () => {
+      const hn = 9 * z.e;
+      const nx = Math.round(z.tx - largeur('DISGRACE', z.e) / 2);
+      const ny = Math.round(z.ty - hn / 2 + z.e);
+      detoure(c, 'DISGRACE', nx, ny, z.e, '#f3d58a');
+      // L'accent circonflexe sur le A.
+      const ax = nx + 5 * 6 * z.e;
+      c.fillStyle = '#f3d58a';
+      c.fillRect(ax + z.e, ny - 2 * z.e, z.e, z.e);
+      c.fillRect(ax + 2 * z.e, ny - 3 * z.e, z.e, z.e);
+      c.fillRect(ax + 3 * z.e, ny - 2 * z.e, z.e, z.e);
+      bandeau(c, "AU SALON DE LA DUCHESSE, SIX MAISONS SE DISPUTENT SA FAVEUR : POUSSE TES ALLIEES A LA LUMIERE, JETTE TES RIVALES DANS L'OMBRE.     ", G.sur - 10, 1, '#f3d58a', 28, t);
+    };
+    // Sur un mur trop bas, la table dorée seule.
+    const rail = Math.max(2, Math.round(z.ah * 0.08));
+    const ry = milieu - (rail >> 1);
+    c.fillStyle = '#d8b25c';
+    c.fillRect(z.ax, ry, z.aw, rail);
+    c.fillStyle = '#8f6d32';
+    c.fillRect(z.ax, ry + rail - 1, z.aw, 1);
+    if (z.ah < 8) return finir();
+    const pas = Math.floor(z.aw / 3);
+    const cw = Math.max(3, Math.min(Math.floor(pas * 0.62), 22));
+    const chh = Math.max(1, Math.min(4, Math.floor((z.ah / 2 - rail) / 5)));
+    const gap = 1;
+    const xs = [0, 1, 2].map((i) => z.ax + i * pas + Math.floor((pas - cw) / 2));
+    const fin = p >= 0.9 ? 1 - lisse((p - 0.9) / 0.08) : 1;
+    // Les cartes posées : en haut, empilées en montant depuis la table ; en bas, en descendant.
+    const pose = (i, k, haut, couleur) => {
+      const y = haut ? ry - (k + 1) * (chh + gap) : ry + rail + gap + k * (chh + gap);
+      c.fillStyle = couleur;
+      c.fillRect(xs[i], y, cw, chh);
+      return y;
+    };
+    c.globalAlpha = fin;
+    S.col.forEach(([h, b], i) => {
+      for (let k = 0; k < h; k++) pose(i, k, true, MAISONS[i]);
+      for (let k = 0; k < b; k++) pose(i, k, false, MAISONS[i]);
+    });
+    // La colonne choisie s'allume, puis la carte arrive d'en haut ou d'en bas.
+    const xa = xs[S.actif];
+    if (p >= 0.12 && p < 0.42 && Math.floor(t * 4) % 2) {
+      c.fillStyle = S.haut ? '#ffe7a8' : '#b8c6ff';
+      const y0 = S.haut ? z.ay : ry + rail;
+      const y1 = S.haut ? ry : z.ay + z.ah;
+      for (let y = y0; y < y1; y += 2) {
+        c.fillRect(xa - 2, y, 1, 1);
+        c.fillRect(xa + cw + 1, y, 1, 1);
+      }
+    }
+    if (p >= 0.2) {
+      const d = lisse((p - 0.2) / 0.18);
+      const k = S.haut ? hautA : basA;
+      const cible = S.haut ? ry - (k + 1) * (chh + gap) : ry + rail + gap + k * (chh + gap);
+      const depart = S.haut ? z.ay - chh : z.ay + z.ah;
+      const y = Math.round(depart + (cible - depart) * d);
+      c.fillStyle = MAISONS[S.actif];
+      c.fillRect(xa, y, cw, chh);
+      // L'Éminence qui arrive : un liseré d'or.
+      c.fillStyle = '#ffe7a8';
+      c.fillRect(xa, y, cw, 1);
+    }
+    // Le cachet tombe sur la table : un anneau, un + d'or ou un - de cire.
+    if (p >= 0.5) {
+      const d = lisse((p - 0.5) / 0.08);
+      const e = Math.max(1, Math.min(3, Math.floor(z.ah / 22), Math.floor(pas / 12)));
+      const r = Math.round((4 + 3 * (1 - d)) * e);
+      const cx = xa + (cw >> 1);
+      const cy = ry + (rail >> 1);
+      const couleur = grace ? '#ffd76a' : '#ff4a4a';
+      c.fillStyle = '#1a0c1e';
+      c.beginPath();
+      c.arc(cx, cy, r + e, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = couleur;
+      c.lineWidth = e;
+      c.beginPath();
+      c.arc(cx, cy, r, 0, Math.PI * 2);
+      c.stroke();
+      if (d >= 1) {
+        c.fillStyle = couleur;
+        const s = grace ? '+' : '-';
+        texte(c, s, cx - Math.round((5 * e) / 2), cy - Math.round((7 * e) / 2), e);
+      }
+    }
+    c.globalAlpha = 1;
+    finir();
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -3099,7 +3219,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito', 'mafia', 'frise'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito', 'mafia', 'frise', 'disgrace'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -3175,7 +3295,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48], mafia: [1, 0.42, 0.84], frise: [0.66, 0.83, 1] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48], mafia: [1, 0.42, 0.84], frise: [0.66, 0.83, 1], disgrace: [0.9, 0.64, 0.85] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
