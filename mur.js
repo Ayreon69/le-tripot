@@ -2858,7 +2858,12 @@ const SCENES = {
       c.fillRect(x, y, cw, ch);
       c.fillStyle = bord;
       c.fillRect(x, y, Math.max(1, e), ch);
-      if (!chiffres) return;
+      if (!chiffres) {
+        // Sans place pour les chiffres : deux lignes de texte sur le cartel, en laiton pour la carte sans date.
+        c.fillStyle = annee === null ? '#c99a33' : '#8c8670';
+        for (let k = 0; k < 2 && 2 + k * 2 < ch - 1; k++) c.fillRect(x + 2, y + 2 + k * 2, Math.max(1, cw - 4 - k * 2), 1);
+        return;
+      }
       const s = annee === null ? '?' : String(annee);
       c.fillStyle = annee === null ? '#9c7a2c' : '#18302a';
       texte(c, s, x + Math.round((cw - largeur(s, e)) / 2) + Math.max(1, e) - 1, y + Math.round((ch - 7 * e) / 2), e);
@@ -2905,6 +2910,16 @@ const SCENES = {
         c.fillRect(xp - 1, y + ch, cw + 2, 1);
         c.fillRect(xp - 1, y - 1, 1, ch + 2);
         c.fillRect(xp + cw, y - 1, 1, ch + 2);
+      }
+      // Sur un petit mur, la date s'allume au-dessus de la carte posée.
+      if (montre && !chiffres && tombe === 0) {
+        const s = String(S.carte);
+        const lx = Math.max(z.ax, Math.min(z.ax + z.aw - largeur(s, 1), xp + Math.round((cw - largeur(s, 1)) / 2)));
+        const ly = Math.max(z.ay, y - 9);
+        c.fillStyle = 'rgba(0,0,0,.6)';
+        c.fillRect(lx - 1, ly - 1, largeur(s, 1) + 2, 9);
+        c.fillStyle = couleur;
+        texte(c, s, lx, ly, 1);
       }
       if (montre && juste) {
         c.fillStyle = ERES[ere(S.carte)];
