@@ -2468,6 +2468,158 @@ const SCENES = {
     nom(c, ['LOUP', 'GAROU'], ['#f6e7bf', '#f2c27a'], z);
     bandeau(c, "LA NUIT, CHACUN RECOIT UN ROLE ET LES CARTES CHANGENT DE MAIN. AU MATIN, UN SEUL VOTE : TROUVE LE LOUP-GAROU.     ", G.sur - 10, 1, '#f2c27a', 28, t);
   },
+  ito(c, t) {
+    const z = zones(['ITO']);
+    // Un matin de lessive en dix secondes : les cartes s'accrochent une à une sur la corde, de dos, au vichy de leur pince ;
+    // puis on les retourne de gauche à droite. Bien rangées, le soleil rit et des confettis tombent ; sinon, deux cartes rougissent.
+    const cycle = 10;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const lisse = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+    const hasard = (k) => {
+      const s = Math.sin(k * 78.233) * 43758.545;
+      return s - Math.floor(s);
+    };
+    const disque = (x, y, q) => {
+      for (let dy = -q; dy <= q; dy++) {
+        const w = Math.floor(Math.sqrt(q * q - dy * dy + q * 0.6));
+        c.fillRect(x - w, y + dy, 2 * w + 1, 1);
+      }
+    };
+    // Le ciel du matin, plus pâle vers l'horizon, et l'herbe du jardin sous le nom.
+    const gy = z.ay + z.ah - 1;
+    for (let y = 0; y < G.h; y++) {
+      const k = Math.min(1, y / Math.max(1, gy));
+      c.fillStyle = `rgb(${Math.round(78 + 70 * k)},${Math.round(152 + 50 * k)},${Math.round(214 + 22 * k)})`;
+      c.fillRect(0, y, G.w, 1);
+    }
+    const herbe = G.sur - 13;
+    for (let x = 0; x < G.w; x++) {
+      const y = herbe + Math.round(Math.sin(x * 0.05 + 2) * 1.5);
+      c.fillStyle = '#4f9a3a';
+      c.fillRect(x, y, 1, G.h - y);
+      c.fillStyle = '#7cc25a';
+      c.fillRect(x, y, 1, 1);
+    }
+    const SERIES = [
+      { n: [12, 37, 64, 81, 95], casse: -1 },
+      { n: [9, 41, 33, 70, 88], casse: 1 },
+      { n: [6, 28, 52, 77, 93], casse: -1 },
+    ];
+    const S = SERIES[n % SERIES.length];
+    // Le soleil, dans un coin ; il grossit un peu quand la corde est bien rangée.
+    const gagne = S.casse < 0 && p >= 0.74 && p < 0.95;
+    const sr = Math.max(2, Math.round(Math.min(z.aw, z.ah) * 0.12)) + (gagne ? 1 : 0);
+    const sx = z.ax + z.aw - sr - 2;
+    const sy = z.ay + sr + 1;
+    c.fillStyle = 'rgba(255,222,110,0.28)';
+    disque(sx, sy, sr + Math.max(2, Math.round(sr / 2)));
+    c.fillStyle = '#ffd45c';
+    disque(sx, sy, sr);
+    // Les cartes : deux chiffres par carte quand le mur est assez haut ; sinon de petites cartes sans chiffres.
+    // Des chiffres aussi gros que possible, tant que trois cartes tiennent sur la corde.
+    const e = Math.max(1, Math.min(Math.floor(z.ah / 28), Math.floor(((z.aw - 4) / 3 - 4) / 15)));
+    const chiffres = z.ah >= 26 && z.aw >= 60;
+    // La corde : d'un piquet à l'autre, avec une flèche au milieu ; sur un mur bas, tout en haut pour laisser les cartes pendre.
+    const ry = z.ay + (chiffres ? Math.max(2, Math.round(z.ah * 0.2)) : 2);
+    const fl = chiffres ? Math.max(1, Math.round(z.ah * 0.08)) : 1;
+    const cw = chiffres ? 11 * e + 4 : Math.max(4, Math.min(12, Math.floor((gy - ry - fl - 3) / 1.35)));
+    const ch = Math.round(cw * 1.35);
+    const nb = Math.max(2, Math.min(5, Math.floor((z.aw - 4) / (cw + (chiffres ? 4 * e : 3)))));
+    const pas = Math.floor((z.aw - 4) / nb);
+    const x0 = z.ax + 2 + Math.floor((pas - cw) / 2);
+    const corde = (x) => {
+      const u = (x - z.ax) / Math.max(1, z.aw) - 0.5;
+      return Math.round(ry + fl * (1 - 4 * u * u));
+    };
+    // Le nom : trois lettres aux couleurs des pinces, et le bandeau.
+    const finir = () => {
+      const hn = 9 * z.e;
+      const nx = Math.round(z.tx - largeur('ITO', z.e) / 2);
+      const ny = Math.round(z.ty - hn / 2 + z.e);
+      ['#ff6b5a', '#ffd45c', '#fffdf6'].forEach((couleur, k) => detoure(c, 'ITO'[k], nx + k * 6 * z.e, ny, z.e, couleur));
+      bandeau(c, 'TOUT LE MONDE A UNE CARTE DE 1 A 100 : DECRIS-LA AVEC UNE IDEE DU THEME, SANS DIRE LE NOMBRE, ET RANGEZ LA CORDE ENSEMBLE.     ', G.sur - 10, 1, '#ff9e7a', 28, t);
+    };
+    if (ry + fl + ch + 2 > gy) return finir();
+    c.fillStyle = '#7a5530';
+    c.fillRect(z.ax, ry - 2, 1, herbe - ry + 3);
+    c.fillRect(z.ax + z.aw - 1, ry - 2, 1, herbe - ry + 3);
+    for (let x = z.ax; x < z.ax + z.aw; x++) {
+      c.fillStyle = x % 3 ? '#c39457' : '#a8773e';
+      c.fillRect(x, corde(x), 1, 1);
+    }
+    const PINCES = ['#e8453c', '#f2c230', '#3a8ee6', '#5fbf4a', '#a45ee0'];
+    const faute = (i) => S.casse >= 0 && (i === S.casse || i === S.casse + 1);
+    const fin = p >= 0.92 ? 1 - lisse((p - 0.92) / 0.06) : 1;
+    c.globalAlpha = fin;
+    for (let i = 0; i < nb; i++) {
+      const arrive = 0.04 + i * 0.065;
+      if (p < arrive) continue;
+      const pince = PINCES[(i + n) % PINCES.length];
+      const cx = x0 + i * pas + (cw >> 1);
+      const top = corde(cx) + 1;
+      // Elle tombe du haut, puis rebondit un peu sur la corde.
+      const d = Math.min(1, (p - arrive) / 0.06);
+      const y = Math.round(top - (1 - lisse(d)) * (top + ch) + (d < 1 ? 0 : Math.round(Math.sin(Math.min(1, (p - arrive - 0.06) / 0.05) * Math.PI) * -1)));
+      // Le retournement, de gauche à droite.
+      const tour = lisse((p - (0.42 + i * 0.06)) / 0.05);
+      const large = Math.max(1, Math.round(cw * Math.abs(1 - 2 * tour)));
+      const face = tour >= 0.5;
+      const xg = cx - (large >> 1);
+      const rouge = face && faute(i) && p >= 0.42 + (S.casse + 1) * 0.06 + 0.05;
+      if (face) {
+        c.fillStyle = rouge ? '#ffd9d3' : '#fffdf6';
+        c.fillRect(xg, y, large, ch);
+        c.fillStyle = rouge ? '#e0402f' : gagne && Math.floor(t * 4) % 2 ? '#2f9e57' : '#c9bfa8';
+        c.fillRect(xg, y + ch - 1, large, 1);
+        if (rouge) {
+          c.fillRect(xg, y, 1, ch);
+          c.fillRect(xg + large - 1, y, 1, ch);
+          c.fillRect(xg, y, large, 1);
+        }
+        if (chiffres && large >= cw - 1) {
+          c.fillStyle = rouge ? '#e0402f' : '#1f3550';
+          const nombre = String(S.n[i]);
+          texte(c, nombre, xg + Math.round((large - largeur(nombre, e)) / 2), y + ch - 7 * e - 3, e);
+        }
+      } else {
+        // Le dos : un vichy à la couleur de la pince.
+        for (let yy = 0; yy < ch; yy++)
+          for (let xx = 0; xx < large; xx++) {
+            const a = Math.floor(xx / Math.max(1, e * 2)) % 2;
+            const b = Math.floor(yy / Math.max(1, e * 2)) % 2;
+            c.fillStyle = a && b ? pince : a || b ? `${pince}99` : '#fffdf6';
+            c.fillRect(xg + xx, y + yy, 1, 1);
+          }
+      }
+      // La pince, par-dessus la corde.
+      const pw = Math.max(1, Math.round(cw / 6));
+      c.fillStyle = pince;
+      c.fillRect(cx - (pw >> 1), y - Math.max(2, 2 * e), pw, Math.max(3, 4 * e));
+    }
+    // L'éclair entre deux cartes à l'envers.
+    if (S.casse >= 0 && p >= 0.42 + (S.casse + 1) * 0.06 + 0.05 && p < 0.92 && Math.floor(t * 5) % 3) {
+      const bx = x0 + S.casse * pas + cw + Math.floor((pas - cw) / 2);
+      const by = corde(bx) + Math.round(ch * 0.3);
+      c.fillStyle = '#ffb020';
+      const h = Math.max(4, Math.round(ch * 0.45));
+      for (let j = 0; j < h; j++) c.fillRect(bx + (j < h / 2 ? -Math.floor(j / 2) : Math.floor((j - h / 2) / 2) - Math.floor(h / 4)), by + j, 2, 1);
+    }
+    // Les confettis d'une corde bien rangée.
+    if (gagne) {
+      const COUL = ['#e8453c', '#f2c230', '#3a8ee6', '#5fbf4a', '#fffdf6'];
+      const q = (p - 0.74) / 0.21;
+      for (let k = 0; k < 26; k++) {
+        const fx = z.ax + Math.floor(hasard(k + n * 31) * z.aw);
+        const fy = z.ay + Math.floor(((hasard(k * 3.1 + 7) + q * 1.4) % 1.2) * z.ah) - 2;
+        if (fy < z.ay || fy > gy) continue;
+        c.fillStyle = COUL[k % COUL.length];
+        c.fillRect(fx + Math.round(Math.sin(t * 5 + k) * 1.5), fy, 1, 1 + (k % 2));
+      }
+    }
+    c.globalAlpha = 1;
+    finir();
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -2638,7 +2790,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -2714,7 +2866,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;

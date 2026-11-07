@@ -168,6 +168,7 @@ main {
 .is-zoo { --c: #9ef0cf; --b: rgba(158, 240, 207, 0.55); }
 .is-secret-number { --c: #ffe14a; --b: rgba(255, 225, 74, 0.55); }
 .is-loup-garou { --c: #b8adff; --b: rgba(184, 173, 255, 0.55); }
+.is-ito { --c: #ff9e7a; --b: rgba(255, 158, 122, 0.55); }
 
 .note {
   max-width: 1320px;
