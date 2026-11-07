@@ -3161,6 +3161,95 @@ const SCENES = {
     c.globalAlpha = 1;
     finir();
   },
+  mytho(c, t) {
+    const z = zones(['MYTHO']);
+    // Le comptoir en sept secondes : trois serviettes posées sur le zinc, chacune griffonnée d'une histoire. Le marqueur
+    // rouge entoure la fausse (une autre à chaque tour), puis les vrais auteurs signent les leurs au stylo bleu.
+    const cycle = 7;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const lisse = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+    const fausse = (n * 2 + 1) % 3;
+    // Le mur lie-de-vin du bistrot, avec ses lattes verticales.
+    for (let y = 0; y < G.h; y++) {
+      const k = y / Math.max(1, G.h);
+      c.fillStyle = `rgb(${Math.round(92 - 40 * k)},${Math.round(22 - 8 * k)},${Math.round(28 - 10 * k)})`;
+      c.fillRect(0, y, G.w, 1);
+    }
+    c.fillStyle = '#3c0e12';
+    for (let x = 5; x < G.w; x += 11) c.fillRect(x, 0, 1, G.sur - 12);
+    const finir = () => {
+      const hn = 9 * z.e;
+      detoure(c, 'MYTHO', Math.round(z.tx - largeur('MYTHO', z.e) / 2), Math.round(z.ty - hn / 2 + z.e), z.e, '#ff6f61');
+      bandeau(c, "CHACUN RACONTE UNE VRAIE ANECDOTE... SAUF LE MYTHO, QUI INVENTE LA SIENNE. TROUVEZ LA FAUSSE !     ", G.sur - 10, 1, '#ff6f61', 28, t);
+    };
+    // Le zinc du comptoir.
+    const sol = z.ay + z.ah - 1;
+    c.fillStyle = '#8f9a9e';
+    c.fillRect(z.ax, sol, z.aw, 1);
+    if (z.ah < 8) return finir();
+    // Les serviettes : leur taille suit le mur, en largeur comme en hauteur.
+    const nw = Math.max(5, Math.min(Math.round(z.aw * 0.22), Math.round(z.ah * 0.72), 40));
+    const nh = Math.max(4, Math.round(nw * 0.9));
+    const gap = Math.max(2, Math.round(nw * 0.35));
+    const x0 = z.ax + Math.round((z.aw - (3 * nw + 2 * gap)) / 2);
+    const yb = sol - 1 - nh;
+    const fin = p >= 0.9 ? 1 - lisse((p - 0.9) / 0.08) : 1;
+    c.globalAlpha = fin;
+    const centres = [];
+    for (let i = 0; i < 3; i++) {
+      const d = lisse((p - 0.03 - i * 0.07) / 0.1);
+      if (d <= 0) continue;
+      const x = x0 + i * (nw + gap);
+      const y = Math.round(yb - (1 - d) * Math.max(3, nh * 0.6));
+      centres[i] = [x + nw / 2, y + nh / 2];
+      c.fillStyle = '#f6ecd2';
+      c.fillRect(x, y, nw, nh);
+      // Le bord gaufré, en pointillés, puis les lignes d'écriture griffonnées.
+      c.fillStyle = '#cdb98e';
+      for (let k = 1; k < nw - 1; k += 2) {
+        c.fillRect(x + k, y + 1, 1, 1);
+        c.fillRect(x + k, y + nh - 2, 1, 1);
+      }
+      const lignes = Math.max(1, Math.floor((nh - 5) / 3));
+      c.fillStyle = '#5a4a44';
+      for (let l = 0; l < lignes; l++) {
+        const lw = Math.max(1, Math.round((nw - 6) * (l === lignes - 1 ? 0.55 : 0.85 - ((i + l) % 3) * 0.08)));
+        c.fillRect(x + 3, y + 3 + l * 3, lw, 1);
+      }
+      // Les vrais auteurs signent : un trait bleu qui s'allonge sous leur histoire.
+      if (i !== fausse && p >= 0.62) {
+        const s = lisse((p - 0.62 - (i > fausse ? 0.06 : 0)) / 0.08);
+        const sh = nw >= 16 ? 2 : 1;
+        c.fillStyle = '#7aa2ff';
+        c.fillRect(x + 2, y + nh - 2 - sh, Math.max(1, Math.round((nw - 4) * 0.7 * s)), sh);
+      }
+    }
+    // Le marqueur rouge fait le tour de la fausse, puis la serviette tremble un instant.
+    const ctr = centres[fausse];
+    if (ctr && p >= 0.36) {
+      const d = lisse((p - 0.36) / 0.14);
+      const e = Math.max(1, Math.round(nw / 8));
+      const rx = nw * 0.5 + gap * 0.45;
+      const ry = Math.min(nh * 0.5 + Math.max(2, gap * 0.4), ctr[1] - z.ay);
+      c.strokeStyle = '#ff4a3d';
+      c.lineWidth = e;
+      c.beginPath();
+      c.ellipse(ctr[0], ctr[1], rx, ry, -0.12, -2.2, -2.2 + d * Math.PI * 2.15);
+      c.stroke();
+      // Le « ! » du verdict au-dessus, qui clignote.
+      if (p >= 0.5 && p < 0.86 && Math.floor(t * 5) % 2) {
+        const q = Math.max(1, Math.min(2, Math.floor(z.ah / 30)));
+        const ty = Math.round(ctr[1] - ry - 8 * q);
+        if (ty >= z.ay) {
+          c.fillStyle = '#ff4a3d';
+          texte(c, '!', Math.round(ctr[0] - 2.5 * q), ty, q);
+        }
+      }
+    }
+    c.globalAlpha = 1;
+    finir();
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -3331,7 +3420,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito', 'mafia', 'frise', 'disgrace', 'contrebande'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito', 'mafia', 'frise', 'disgrace', 'contrebande', 'mytho'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -3407,7 +3496,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48], mafia: [1, 0.42, 0.84], frise: [0.66, 0.83, 1], disgrace: [0.9, 0.64, 0.85], contrebande: [0.91, 0.79, 0.48] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48], mafia: [1, 0.42, 0.84], frise: [0.66, 0.83, 1], disgrace: [0.9, 0.64, 0.85], contrebande: [0.91, 0.79, 0.48], mytho: [1, 0.44, 0.38] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;

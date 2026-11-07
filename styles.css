@@ -173,6 +173,7 @@ main {
 .is-frise { --c: #a8d4ff; --b: rgba(168, 212, 255, 0.55); }
 .is-disgrace { --c: #e6a3d8; --b: rgba(230, 163, 216, 0.55); }
 .is-contrebande { --c: #e8c97a; --b: rgba(232, 201, 122, 0.55); }
+.is-mytho { --c: #ff6f61; --b: rgba(255, 111, 97, 0.55); }
 
 .note {
   max-width: 1320px;
