@@ -2335,9 +2335,11 @@ const SCENES = {
       }
     };
     // La lune, avec son halo et ses cratères ; elle descend et pâlit à l'aube.
-    const mr = Math.max(3, Math.round(Math.min(z.aw, z.ah) * 0.17));
+    // Sur un mur très bas (petit téléphone), seuls le ciel et une petite lune tiennent au-dessus du nom.
+    const bas = z.ah < 12;
+    const mr = bas ? 2 : Math.max(3, Math.round(Math.min(z.aw, z.ah) * 0.17));
     const mx = z.ax + Math.round(z.aw * 0.82);
-    const my = z.ay + Math.round(z.ah * 0.25 + aube * z.ah * 0.3);
+    const my = bas ? z.ay + 1 : z.ay + Math.round(z.ah * 0.25 + aube * z.ah * 0.3);
     c.globalAlpha = 1 - aube * 0.85;
     c.fillStyle = 'rgba(246,231,191,0.13)';
     disque(mx, my, mr + Math.max(2, Math.round(mr / 3)));
@@ -2361,7 +2363,7 @@ const SCENES = {
     // Sur un mur bas (téléphone), le village se tasse pour laisser le ciel à la lune et aux cartes.
     const hs = Math.min(s, (z.ah * 0.55) / 19);
     const MAISONS = [[0.5, 7, 6], [0.6, 3, 13, true], [0.69, 9, 8], [0.8, 5, 5], [0.88, 7, 7], [0.96, 5, 5]];
-    MAISONS.forEach(([fx, w0, h0, clocher], i) => {
+    if (!bas) MAISONS.forEach(([fx, w0, h0, clocher], i) => {
       const w = w0 * s;
       const h = Math.max(2, Math.round(h0 * hs));
       const x = z.ax + Math.round(z.aw * fx) - (w >> 1);
