@@ -3049,6 +3049,118 @@ const SCENES = {
     c.globalAlpha = 1;
     finir();
   },
+  contrebande(c, t) {
+    const z = zones(['CONTREBANDE']);
+    // Le poste-frontière en sept secondes : une valise étiquetée arrive à la barrière. Une fois sur deux la barrière se lève
+    // et elle passe (tampon vert), l'autre fois le douanier siffle, la valise s'ouvre et le tampon rouge tombe : saisie.
+    const cycle = 7;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const lisse = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+    const saisie = n % 2 === 1;
+    // La nuit bleu marine du passeport, semée d'un guillochis d'or.
+    for (let y = 0; y < G.h; y++) {
+      const k = y / Math.max(1, G.h);
+      c.fillStyle = `rgb(${Math.round(14 + 10 * k)},${Math.round(30 + 12 * k)},${Math.round(62 + 10 * k)})`;
+      c.fillRect(0, y, G.w, 1);
+    }
+    c.fillStyle = '#5e5530';
+    for (let y = 3; y < G.sur - 12; y += 7) for (let x = (y / 7) % 2 ? 1 : 4; x < G.w; x += 7) c.fillRect(x, y, 1, 1);
+    const finir = () => {
+      const hn = 9 * z.e;
+      detoure(c, 'CONTREBANDE', Math.round(z.tx - largeur('CONTREBANDE', z.e) / 2), Math.round(z.ty - hn / 2 + z.e), z.e, '#e8c97a');
+      bandeau(c, "UN DISCOURS IMPROVISE, TROIS MOTS ABSURDES A GLISSER L'AIR DE RIEN... ET TOUTE UNE TABLE DE DOUANIERS QUI TEND L'OREILLE. CONTROLE !     ", G.sur - 10, 1, '#e8c97a', 28, t);
+    };
+    // La route.
+    const sol = z.ay + z.ah - 1;
+    c.fillStyle = '#3a4560';
+    c.fillRect(z.ax, sol, z.aw, 1);
+    if (z.ah < 8) return finir();
+    // La valise : sa taille suit le mur.
+    const vw = Math.max(6, Math.min(Math.round(z.aw * 0.2), Math.round(z.ah * 0.8), 34));
+    const vh = Math.max(4, Math.round(vw * 0.6));
+    // La barrière : un poteau, et une perche rouge et blanche qui se lève vers la gauche.
+    const pw = Math.max(2, Math.round(vw / 6));
+    const ph = Math.min(z.ah - 2, vh + Math.max(3, Math.round(vh * 0.7)));
+    const bx = z.ax + Math.round(z.aw * 0.66);
+    const py = sol - ph;
+    const L = Math.max(8, Math.round(z.aw * 0.3));
+    c.fillStyle = '#9aa6c4';
+    c.fillRect(bx, py, pw, ph);
+    c.fillStyle = '#e8c97a';
+    c.fillRect(bx, py, pw, 1);
+    const leve = saisie ? 0 : lisse((p - 0.34) / 0.1) * (1 - lisse((p - 0.8) / 0.1));
+    const angle = leve * 1.35;
+    c.save();
+    c.translate(bx + pw / 2, py + 1);
+    c.rotate(angle);
+    const ep = Math.max(1, Math.round(pw * 0.7));
+    for (let i = 0; i < L; i += 3) {
+      c.fillStyle = Math.floor(i / 3) % 2 ? '#f4efe2' : '#d8342c';
+      c.fillRect(-i - 3, -ep / 2, 3, ep);
+    }
+    c.restore();
+    // Le trajet : arrivée à la barrière, puis, si elle se lève, la suite de la route.
+    const arret = bx - L - vw - 2;
+    let x = -vw + (arret + vw) * lisse((p - 0.04) / 0.26);
+    if (!saisie && p >= 0.45) x = arret + (z.ax + z.aw + 4 - arret) * lisse((p - 0.45) / 0.3);
+    x = Math.round(x);
+    const y = sol - vh;
+    const ouverte = saisie ? lisse((p - 0.5) / 0.08) : 0;
+    const fin = p >= 0.9 ? 1 - lisse((p - 0.9) / 0.08) : 1;
+    c.globalAlpha = fin;
+    // Le corps, les sangles, la poignée, puis le couvercle qui s'entrouvre à la fouille.
+    c.fillStyle = '#b5703a';
+    c.fillRect(x, y, vw, vh);
+    c.fillStyle = '#5c2f12';
+    const sg = Math.max(1, Math.round(vw / 8));
+    c.fillRect(x + Math.round(vw * 0.25), y, sg, vh);
+    c.fillRect(x + Math.round(vw * 0.72), y, sg, vh);
+    const lid = Math.max(1, Math.round(vh * 0.25));
+    const ly = y - Math.round(ouverte * vh * 0.5);
+    c.fillStyle = '#9a5c2c';
+    c.fillRect(x, ly, vw, lid);
+    c.fillStyle = '#6b3f1f';
+    const hw = Math.max(2, Math.round(vw * 0.3));
+    c.fillRect(x + Math.round((vw - hw) / 2), ly - Math.max(1, Math.round(vh / 5)), hw, 1);
+    c.fillRect(x + Math.round((vw - hw) / 2), ly - Math.max(1, Math.round(vh / 5)), 1, Math.max(1, Math.round(vh / 5)));
+    c.fillRect(x + Math.round((vw + hw) / 2) - 1, ly - Math.max(1, Math.round(vh / 5)), 1, Math.max(1, Math.round(vh / 5)));
+    // Trois étiquettes kraft qui pendent ; à la fouille, elles sautent hors de la valise.
+    const tw = Math.max(2, Math.round(vw / 5));
+    const th = Math.max(2, Math.round(tw * 0.6));
+    for (let i = 0; i < 3; i++) {
+      const tx = x + Math.round(((i + 0.5) * vw) / 3 - tw / 2);
+      const saut = ouverte * Math.round(vh * (0.8 + 0.35 * i));
+      c.fillStyle = i === 1 && saisie && p >= 0.62 ? '#ff5a4a' : '#f6e7c1';
+      c.fillRect(tx, Math.round(y + vh * 0.45 - saut), tw, th);
+    }
+    // Le coup de sifflet : un « ! » rouge qui clignote au-dessus du poteau.
+    const e = Math.max(1, Math.min(3, Math.floor(z.ah / 24)));
+    if (saisie && p >= 0.36 && p < 0.52 && Math.floor(t * 6) % 2) {
+      c.fillStyle = '#ff4a4a';
+      texte(c, '!', bx + Math.round(pw / 2 - 2.5 * e), Math.max(z.ay, py - 9 * e), e);
+    }
+    // Le tampon : SAISI en rouge sur la valise, ou OK en vert de l'autre côté de la barrière.
+    const tampon = saisie ? (p >= 0.62 ? 'SAISI' : '') : p >= 0.6 ? 'OK' : '';
+    if (tampon) {
+      const d = lisse((p - (saisie ? 0.62 : 0.6)) / 0.06);
+      const w = largeur(tampon, e);
+      const cx = saisie ? x + (vw >> 1) : bx + pw + Math.round((z.ax + z.aw - bx - pw) / 2);
+      const sx = Math.max(z.ax + 2 * e, Math.min(z.ax + z.aw - w - 2 * e, Math.round(cx - w / 2)));
+      const sy = Math.max(z.ay + 2 * e, Math.round(z.ay + z.ah * 0.18));
+      const couleur = saisie ? '#ff4a4a' : '#5fd08e';
+      c.globalAlpha = fin * d;
+      c.fillStyle = '#0e1e3e';
+      c.fillRect(sx - 2 * e, sy - 2 * e, w + 4 * e, 11 * e);
+      c.strokeStyle = couleur;
+      c.lineWidth = e;
+      c.strokeRect(sx - 1.5 * e, sy - 1.5 * e, w + 3 * e, 10 * e);
+      c.fillStyle = couleur;
+      texte(c, tampon, sx, sy, e);
+    }
+    c.globalAlpha = 1;
+    finir();
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -3219,7 +3331,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito', 'mafia', 'frise', 'disgrace'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito', 'mafia', 'frise', 'disgrace', 'contrebande'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -3295,7 +3407,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48], mafia: [1, 0.42, 0.84], frise: [0.66, 0.83, 1], disgrace: [0.9, 0.64, 0.85] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48], mafia: [1, 0.42, 0.84], frise: [0.66, 0.83, 1], disgrace: [0.9, 0.64, 0.85], contrebande: [0.91, 0.79, 0.48] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
