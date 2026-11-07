@@ -2802,6 +2802,118 @@ const SCENES = {
     c.globalAlpha = 1;
     finir();
   },
+  frise(c, t) {
+    const z = zones(['FRISE']);
+    // Une galerie de musée en neuf secondes : trois cartes datées sont posées sur le ruban des époques, une place s'allume,
+    // une carte sans date vient s'y glisser, puis sa date s'allume. Juste, elle reste et brille en vert ; fausse, elle rougit et tombe.
+    const cycle = 9;
+    const n = Math.floor(t / cycle);
+    const p = (t % cycle) / cycle;
+    const lisse = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+    const ERES = ['#e8894a', '#d0628c', '#4f96e0', '#9a7ce6', '#2fbdb5', '#f0c94a'];
+    const ere = (y) => (y < 476 ? 0 : y < 1492 ? 1 : y < 1789 ? 2 : y < 1914 ? 3 : y < 2000 ? 4 : 5);
+    const SERIES = [
+      { ligne: [1789, 1903, 1969], carte: 1889, place: 1 },
+      { ligne: [1492, 1789, 1912], carte: 1969, place: 1 },
+      { ligne: [1066, 1492, 1889], carte: 1789, place: 2 },
+      { ligne: [1903, 1969, 2007], carte: 1928, place: 1 },
+    ];
+    const S = SERIES[n % SERIES.length];
+    const juste = (S.place === 0 || S.ligne[S.place - 1] <= S.carte) && (S.place === S.ligne.length || S.carte <= S.ligne[S.place]);
+    // Le mur vert de la galerie, ses lambris, et le nom en bas.
+    for (let y = 0; y < G.h; y++) {
+      const k = Math.min(1, y / Math.max(1, G.h));
+      c.fillStyle = `rgb(${Math.round(24 + 8 * k)},${Math.round(56 - 12 * k)},${Math.round(48 - 8 * k)})`;
+      c.fillRect(0, y, G.w, 1);
+    }
+    c.fillStyle = '#2b5a4c';
+    for (let x = 6; x < G.w; x += 14) c.fillRect(x, 0, 1, G.sur - 12);
+    const finir = () => {
+      const hn = 9 * z.e;
+      const nx = Math.round(z.tx - largeur('FRISE', z.e) / 2);
+      const ny = Math.round(z.ty - hn / 2 + z.e);
+      [...'FRISE'].forEach((l, k) => detoure(c, l, nx + k * 6 * z.e, ny, z.e, k === 4 ? '#fff6e2' : ERES[k + 1]));
+      bandeau(c, "CHAQUE CARTE RACONTE UNE INVENTION OU UN EVENEMENT SANS SA DATE : GLISSE-LA A SA PLACE DANS LA FRISE. LE PREMIER QUI N'A PLUS DE CARTE GAGNE.     ", G.sur - 10, 1, '#f0c94a', 28, t);
+    };
+    // Quatre places sur le ruban : des chiffres aussi gros que possible, tant que quatre cartes y tiennent.
+    const e = Math.max(1, Math.min(Math.floor(z.ah / 24), Math.floor((z.aw - 8) / 4 / 27)));
+    const chiffres = z.ah >= 22 && z.aw >= 4 * (largeur('1789', 1) + 6);
+    const cw = chiffres ? largeur('1789', e) + 4 * e + 2 : Math.max(4, Math.min(14, Math.floor((z.aw - 8) / 5)));
+    const ch = chiffres ? 7 * e + 6 + 2 * e : Math.max(3, Math.round(cw * 0.7));
+    const ruban = Math.max(2, Math.round(z.ah * 0.07));
+    const ry = z.ay + z.ah - ruban - Math.max(2, Math.round(z.ah * 0.12));
+    const top = ry - ch - Math.max(2, e * 2);
+    if (top < z.ay + 1) return finir();
+    const pas = Math.floor(z.aw / 4);
+    const xs = [0, 1, 2, 3].map((i) => z.ax + i * pas + Math.floor((pas - cw) / 2));
+    // Le ruban des époques, de gauche à droite.
+    for (let x = z.ax; x < z.ax + z.aw; x++) {
+      c.fillStyle = ERES[Math.min(5, Math.floor(((x - z.ax) / z.aw) * 6))];
+      c.fillRect(x, ry, 1, ruban);
+    }
+    const fin = p >= 0.9 ? 1 - lisse((p - 0.9) / 0.07) : 1;
+    c.globalAlpha = fin;
+    const carte = (x, y, annee, bord, fond = '#fff6e2') => {
+      c.fillStyle = fond;
+      c.fillRect(x, y, cw, ch);
+      c.fillStyle = bord;
+      c.fillRect(x, y, Math.max(1, e), ch);
+      if (!chiffres) return;
+      const s = annee === null ? '?' : String(annee);
+      c.fillStyle = annee === null ? '#9c7a2c' : '#18302a';
+      texte(c, s, x + Math.round((cw - largeur(s, e)) / 2) + Math.max(1, e) - 1, y + Math.round((ch - 7 * e) / 2), e);
+    };
+    // Les trois cartes déjà posées, chacune sur son point du ruban ; elles laissent la place visée vide.
+    const places = [0, 1, 2, 3].filter((i) => i !== S.place);
+    S.ligne.forEach((annee, k) => {
+      const arrive = 0.03 + k * 0.05;
+      if (p < arrive) return;
+      const i = places[k];
+      const d = lisse((p - arrive) / 0.06);
+      c.globalAlpha = fin * d;
+      carte(xs[i], top, annee, ERES[ere(annee)]);
+      c.fillStyle = ERES[ere(annee)];
+      c.fillRect(xs[i] + (cw >> 1) - 1, top + ch, 2, ry - top - ch);
+    });
+    c.globalAlpha = fin;
+    // La place visée clignote en laiton.
+    const xp = xs[S.place];
+    if (p >= 0.22 && p < 0.5 && Math.floor(t * 4) % 2) {
+      c.fillStyle = '#f0c94a';
+      for (let x = xp; x < xp + cw; x += 2) {
+        c.fillRect(x, top, 1, 1);
+        c.fillRect(x, top + ch - 1, 1, 1);
+      }
+      for (let y = top; y < top + ch; y += 2) {
+        c.fillRect(xp, y, 1, 1);
+        c.fillRect(xp + cw - 1, y, 1, 1);
+      }
+    }
+    // La carte sans date arrive d'en haut, se pose, puis montre sa date.
+    if (p >= 0.3) {
+      const d = lisse((p - 0.3) / 0.16);
+      let y = Math.round(z.ay - ch + (top - z.ay + ch) * d);
+      const montre = p >= 0.56;
+      const tombe = !juste && p >= 0.74 ? lisse((p - 0.74) / 0.12) : 0;
+      y += Math.round(tombe * (G.h - top));
+      const couleur = !montre ? '#f0c94a' : juste ? '#3fd47a' : '#ff5a4a';
+      const clignote = montre && p < 0.74 && Math.floor(t * 6) % 2;
+      carte(xp, y, montre ? S.carte : null, couleur, montre && !juste ? '#ffd9d3' : '#fff6e2');
+      if (clignote) {
+        c.fillStyle = couleur;
+        c.fillRect(xp - 1, y - 1, cw + 2, 1);
+        c.fillRect(xp - 1, y + ch, cw + 2, 1);
+        c.fillRect(xp - 1, y - 1, 1, ch + 2);
+        c.fillRect(xp + cw, y - 1, 1, ch + 2);
+      }
+      if (montre && juste) {
+        c.fillStyle = ERES[ere(S.carte)];
+        c.fillRect(xp + (cw >> 1) - 1, top + ch, 2, ry - top - ch);
+      }
+    }
+    c.globalAlpha = 1;
+    finir();
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -2972,7 +3084,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito', 'mafia'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito', 'mafia', 'frise'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -3048,7 +3160,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48], mafia: [1, 0.42, 0.84] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48], mafia: [1, 0.42, 0.84], frise: [0.66, 0.83, 1] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
