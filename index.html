@@ -8,6 +8,13 @@
   <meta name="theme-color" content="#050507">
   <meta property="og:title" content="akhis-games">
   <meta property="og:description" content="Tous nos jeux de bluff et de cartes au même endroit. Sans compte, sans installation.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://akhis-games.onrender.com/">
+  <!-- L'image qui s'affiche quand on colle le lien sur Discord. À refaire quand la grille change (voir le README). -->
+  <meta property="og:image" content="https://akhis-games.onrender.com/partage.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +25,31 @@
   <canvas id="mur" aria-hidden="true"></canvas>
   <h1 class="invisible">akhis-games</h1>
 
+  <!-- L'attente quand le serveur d'un jeu dort : le mur joue sa scène, et le jeu s'ouvre tout seul. -->
+  <div class="attente" id="attente" role="status" aria-live="polite" hidden>
+    <p class="attente-titre"><span id="attente-nom"></span> se réveille…</p>
+    <div class="attente-barre"><span id="attente-avance"></span></div>
+    <p class="attente-texte">Les serveurs gratuits s'endorment quand personne ne joue. Compte une trentaine de secondes : le jeu s'ouvre tout seul.</p>
+    <button class="attente-annuler" id="attente-annuler" type="button">Annuler</button>
+  </div>
+
   <main>
+    <!-- Le tri par nombre de joueurs et le tirage au sort. Le tri ne s'affiche que sur grand écran. -->
+    <div class="outils">
+      <div class="tri" role="group" aria-label="Combien de joueurs ?">
+        <span class="tri-titre">Vous êtes</span>
+        <button class="tri-choix" type="button" data-joueurs="2" aria-pressed="false">2</button>
+        <button class="tri-choix" type="button" data-joueurs="3" aria-pressed="false">3</button>
+        <button class="tri-choix" type="button" data-joueurs="4" aria-pressed="false">4</button>
+        <button class="tri-choix" type="button" data-joueurs="5" aria-pressed="false">5</button>
+        <button class="tri-choix" type="button" data-joueurs="6" aria-pressed="false">6</button>
+        <button class="tri-choix" type="button" data-joueurs="7" aria-pressed="false">7</button>
+        <button class="tri-choix" type="button" data-joueurs="8" aria-pressed="false">8</button>
+        <button class="tri-choix" type="button" data-joueurs="9" aria-pressed="false" aria-label="9 ou plus">9+</button>
+      </div>
+      <button class="hasard" type="button"><span class="hasard-de" aria-hidden="true"></span>Au hasard</button>
+      <p class="tri-bilan" id="tri-bilan" aria-live="polite"></p>
+    </div>
     <!-- Pour ajouter un jeu : voir le README. -->
     <ul class="jeux">
       <li><a class="jeu is-indian" data-scene="indian" href="https://indian-poker-usrn.onrender.com"><span class="jeu-nom">Indian Poker</span><span class="jeu-info">2 à 8 joueurs</span></a></li>
@@ -54,6 +85,8 @@
       <li><a class="jeu is-disgrace" data-scene="disgrace" href="https://disgrace.onrender.com"><span class="jeu-nom">Disgrâce</span><span class="jeu-info">2 à 5 joueurs</span></a></li>
       <li><a class="jeu is-contrebande" data-scene="contrebande" href="https://contrebande.onrender.com"><span class="jeu-nom">Contre&shy;bande</span><span class="jeu-info">4 à 10 joueurs</span></a></li>
       <li><a class="jeu is-mytho" data-scene="mytho" href="https://mytho.onrender.com"><span class="jeu-nom">Mytho</span><span class="jeu-info">4 à 10 joueurs</span></a></li>
+      <!-- Sur téléphone, le tirage au sort prend la place libre de la dernière rangée. -->
+      <li class="case-hasard"><button class="hasard" type="button"><span class="hasard-de" aria-hidden="true"></span>Au hasard</button></li>
     </ul>
     <p class="note">Serveurs gratuits : un jeu peut mettre jusqu'à une minute à s'ouvrir. Créations de fans, non officielles.</p>
   </main>

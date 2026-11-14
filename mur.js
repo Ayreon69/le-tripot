@@ -3312,6 +3312,8 @@ const canvas = document.getElementById('mur');
 const calme = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const gl = canvas.getContext('webgl', { antialias: false, alpha: false, depth: false, stencil: false });
 const liens = [...document.querySelectorAll('.jeu')];
+// Ce que le reste de la page demande au mur. Sans WebGL, ces gestes ne font rien.
+const mur = { montre() {}, eclair() {}, libere() {} };
 
 if (!gl) {
   document.documentElement.classList.add('sans-gl');
@@ -3375,7 +3377,10 @@ function demarre() {
     G.w = Math.ceil(W / G.cellule);
     G.h = Math.ceil(H / G.cellule);
     G.paysage = W >= 760;
-    const haut = document.querySelector('.jeux').getBoundingClientRect().top + 30;
+    // Le mur s'arrête où commence le bas de page : la barre d'outils sur grand écran, la grille sur téléphone.
+    const outils = document.querySelector('.outils');
+    const haut = (outils.offsetParent ? outils : document.querySelector('.jeux')).getBoundingClientRect().top + 30;
+    document.documentElement.style.setProperty('--mur', `${Math.round(haut)}px`);
     G.sur = Math.max(30, Math.floor(haut / G.cellule));
     for (const e of [ecranA, ecranB]) {
       e.width = G.w;
@@ -3511,17 +3516,23 @@ function demarre() {
     l.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') lache(); });
     l.addEventListener('focus', choisit);
     l.addEventListener('blur', lache);
-    // Un éclair de la couleur du jeu sur tout le mur, puis on part.
-    l.addEventListener('click', (e) => {
-      if (calme || e.ctrlKey || e.metaKey || e.shiftKey) return;
-      e.preventDefault();
-      verrouille = l.dataset.scene;
-      vers(verrouille, ...centre(l));
-      flashC = COULEURS[l.dataset.scene];
-      flash = 1;
-      setTimeout(() => { location.href = l.href; }, 240);
-    });
   });
+  // Le clic, le tirage au sort et l'attente du réveil pilotent le mur par ces trois gestes.
+  mur.montre = (l) => {
+    verrouille = l.dataset.scene;
+    vers(verrouille, ...centre(l));
+    if (calme) requestAnimationFrame(image);
+  };
+  // Un éclair de la couleur du jeu sur tout le mur.
+  mur.eclair = (l) => {
+    if (calme) return;
+    flashC = COULEURS[l.dataset.scene] ?? [1, 1, 1];
+    flash = 1;
+  };
+  mur.libere = () => {
+    verrouille = null;
+    prochain = performance.now() + 1800;
+  };
 
   addEventListener('pageshow', (e) => {
     if (e.persisted) {
@@ -3556,3 +3567,137 @@ function reveille(e) {
   fetch(url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {});
 }
 for (const type of ['pointerover', 'pointerdown', 'focusin']) document.addEventListener(type, reveille);
+
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+const nomDe = (l) => l.querySelector('.jeu-nom').textContent.replace(/­/g, '').replace(/\s+/g, ' ').trim();
+
+// Ouvrir un jeu. Serveur éveillé : on part après l'éclair. Serveur endormi : le panneau d'attente
+// reste sur le mur, qui joue la scène du jeu, et la page s'ouvre dès que le serveur répond.
+const attente = document.getElementById('attente');
+const avance = document.getElementById('attente-avance');
+let ouverture = null;
+
+function fermeAttente() {
+  if (ouverture) ouverture.annule = true;
+  ouverture = null;
+  attente.hidden = true;
+  mur.libere();
+}
+
+async function ouvre(l) {
+  if (ouverture) ouverture.annule = true;
+  const moi = (ouverture = { annule: false });
+  const debut = performance.now();
+  mur.montre(l);
+  mur.eclair(l);
+  // La réponse de /health est illisible d'ici (autre site), mais elle n'arrive qu'une fois le serveur debout.
+  // Une erreur réseau ne retient personne : on ouvre le jeu, et le navigateur dira ce qui ne va pas.
+  const reponse = fetch(new URL('/health', l.href), { mode: 'no-cors', cache: 'no-store' }).catch(() => {});
+  const debout = Promise.race([reponse, pause(90_000)]);
+  const vite = await Promise.race([debout.then(() => true), pause(900).then(() => false)]);
+  if (moi.annule) return;
+  if (!vite) {
+    document.getElementById('attente-nom').textContent = nomDe(l);
+    attente.style.setProperty('--c', getComputedStyle(l).getPropertyValue('--c'));
+    avance.style.width = '0';
+    attente.hidden = false;
+    // La barre avance vite puis ralentit : elle ne finit jamais avant le serveur.
+    const pas = setInterval(() => {
+      avance.style.width = `${(96 * (1 - Math.exp(-(performance.now() - debut) / 13_000))).toFixed(1)}%`;
+    }, 250);
+    await debout;
+    clearInterval(pas);
+    if (moi.annule) return;
+    avance.style.width = '100%';
+  }
+  await pause(Math.max(0, 240 - (performance.now() - debut)));
+  if (moi.annule) return;
+  location.href = l.href;
+}
+
+liens.forEach((l) => {
+  l.addEventListener('click', (e) => {
+    // Ctrl, Maj ou clic du milieu : le navigateur ouvre un nouvel onglet, on le laisse faire.
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    ouvre(l);
+  });
+  l.addEventListener('pointerenter', (e) => {
+    if (e.pointerType === 'mouse') liens.forEach((x) => x.classList.remove('is-elu'));
+  });
+});
+document.getElementById('attente-annuler').addEventListener('click', fermeAttente);
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && ouverture) fermeAttente(); });
+// Retour arrière depuis un jeu : la page revient telle qu'on l'a quittée, sans panneau.
+addEventListener('pageshow', (e) => { if (e.persisted) fermeAttente(); });
+
+// Le tri par nombre de joueurs, lu dans le texte de chaque bouton (« 3 à 8 joueurs », « 7 ou 8 joueurs »).
+const tri = document.querySelector('.tri');
+const choix = [...document.querySelectorAll('.tri-choix')];
+const bilan = document.getElementById('tri-bilan');
+const bornes = new Map(liens.map((l) => {
+  const n = (l.querySelector('.jeu-info')?.textContent.match(/\d+/g) ?? []).map(Number);
+  return [l, [n[0] ?? 1, n[n.length - 1] ?? 99]];
+}));
+const CLE_JOUEURS = 'akhis-joueurs';
+let joueurs = 0;
+try { joueurs = Number(localStorage.getItem(CLE_JOUEURS)) || 0; } catch { /* stockage fermé : pas de souvenir */ }
+
+// Le tri ne vaut que là où ses boutons se voient ; « 9+ » garde les jeux qui montent à 9 ou plus.
+const triActif = () => (tri.offsetParent ? joueurs : 0);
+function convient(l) {
+  const n = triActif();
+  if (!n) return true;
+  const [min, max] = bornes.get(l);
+  return n >= 9 ? max >= 9 : min <= n && n <= max;
+}
+
+function applique() {
+  const n = triActif();
+  choix.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.joueurs) === n)));
+  liens.forEach((l) => l.classList.toggle('is-hors', !convient(l)));
+  const reste = liens.filter(convient).length;
+  bilan.textContent = n ? `${reste} jeu${reste > 1 ? 'x' : ''} à ${n >= 9 ? '9 ou plus' : n}` : '';
+}
+
+choix.forEach((b) => b.addEventListener('click', () => {
+  const n = Number(b.dataset.joueurs);
+  joueurs = joueurs === n ? 0 : n;
+  try { localStorage.setItem(CLE_JOUEURS, String(joueurs)); } catch { /* tant pis */ }
+  liens.forEach((l) => l.classList.remove('is-elu'));
+  applique();
+}));
+addEventListener('resize', applique);
+applique();
+
+// « Au hasard » : la lumière saute de jeu en jeu parmi ceux qui conviennent, ralentit, puis s'arrête.
+// Le jeu tiré prend le mur et le clavier ; on clique dessus pour jouer, ou on relance.
+let tirage = 0;
+let dernier = null;
+async function tire() {
+  const moi = ++tirage;
+  const possibles = liens.filter(convient);
+  if (!possibles.length) return;
+  const sansRedite = possibles.length > 1 ? possibles.filter((l) => l !== dernier) : possibles;
+  const elu = sansRedite[Math.floor(Math.random() * sansRedite.length)];
+  liens.forEach((l) => l.classList.remove('is-elu', 'is-tire'));
+  if (!calme && possibles.length > 1) {
+    let vu = null;
+    for (let i = 0; i < 14; i++) {
+      // L'avant-dernier saut évite l'élu, pour que le dernier se voie.
+      const autres = possibles.filter((l) => l !== vu && (i !== 12 || l !== elu));
+      vu = i === 13 ? elu : autres[Math.floor(Math.random() * autres.length)] ?? vu;
+      liens.forEach((l) => l.classList.toggle('is-tire', l === vu));
+      await pause(50 + i * i * 1.4);
+      if (moi !== tirage) return;
+    }
+  }
+  liens.forEach((l) => l.classList.remove('is-tire'));
+  dernier = elu;
+  elu.classList.add('is-elu');
+  elu.focus({ preventScroll: true });
+  mur.eclair(elu);
+  bilan.innerHTML = '';
+  bilan.append('Le sort a choisi ', Object.assign(document.createElement('b'), { textContent: nomDe(elu) }), '. Clique dessus, ou relance.');
+}
+document.querySelectorAll('.hasard').forEach((b) => b.addEventListener('click', tire));
