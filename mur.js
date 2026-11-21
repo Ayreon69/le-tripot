@@ -3250,6 +3250,90 @@ const SCENES = {
     c.globalAlpha = 1;
     finir();
   },
+  loveletter(c, t) {
+    const z = zones(['LOVE', 'LETTER']);
+    // Une lettre d'amour en six secondes : l'enveloppe s'ouvre, la lettre en sort avec son cœur, puis elle rentre et un cachet de cire scelle le rabat.
+    const cycle = 6;
+    const p = (t % cycle) / cycle;
+    const lisse = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+    for (let y = 0; y < G.h; y++) {
+      const k = y / Math.max(1, G.h);
+      c.fillStyle = `rgb(${Math.round(24 - 12 * k)},${Math.round(36 - 18 * k)},${Math.round(78 - 40 * k)})`;
+      c.fillRect(0, y, G.w, 1);
+    }
+    // Quelques étoiles qui clignent, comme une fenêtre de nuit.
+    for (let i = 0; i < 14; i++) {
+      const sx = (i * 37 + 11) % Math.max(1, G.w);
+      const sy = (i * 19 + 5) % Math.max(1, G.sur - 14);
+      if (Math.sin(t * 2 + i * 1.7) > 0.2) {
+        c.fillStyle = '#c9d3ff';
+        c.fillRect(sx, sy, 1, 1);
+      }
+    }
+    const coeur = (cx, cy, s, couleur) => {
+      const motif = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
+      c.fillStyle = couleur;
+      motif.forEach((ligne, j) => {
+        for (let i = 0; i < 7; i++) if (ligne[i] === 'X') c.fillRect(Math.round(cx - 3.5 * s + i * s), Math.round(cy - 3 * s + j * s), s, s);
+      });
+    };
+    const finir = () => {
+      nom(c, ['LOVE', 'LETTER'], ['#ff5a7a', '#fbf4e4'], z);
+      bandeau(c, 'FAIS PASSER TA LETTRE JUSQU\'A L\'INFANTE. DEVINE, ESPIONNE, ELIMINE !     ', G.sur - 10, 1, '#ff5a7a', 28, t);
+    };
+    if (z.ah < 8) return finir();
+    const ew = Math.max(10, Math.min(Math.round(z.aw * 0.7), Math.round(z.ah * 1.5), 52));
+    const eh = Math.max(7, Math.round(ew * 0.64));
+    const ex = z.ax + Math.round((z.aw - ew) / 2);
+    const ey = z.ay + Math.max(2, Math.round((z.ah - eh) / 2) + 1);
+    const ouvre = p < 0.12 ? lisse(p / 0.12) : p < 0.62 ? 1 : 1 - lisse((p - 0.62) / 0.1);
+    const sort = p < 0.12 ? 0 : p < 0.4 ? lisse((p - 0.12) / 0.28) : p < 0.62 ? 1 : 1 - lisse((p - 0.62) / 0.12);
+    const fin = p >= 0.92 ? 1 - lisse((p - 0.92) / 0.08) : 1;
+    c.globalAlpha = fin;
+    // Le fond de l'enveloppe, puis la lettre qui en sort, puis l'avant de l'enveloppe.
+    c.fillStyle = '#c4b183';
+    c.fillRect(ex, ey, ew, eh);
+    const lw = ew - 4;
+    const lh = Math.max(6, eh - 1);
+    const ly = Math.round(ey + 2 - sort * Math.min(eh * 0.95, ey - z.ay + 2));
+    c.fillStyle = '#fbf4e4';
+    c.fillRect(ex + 2, ly, lw, lh);
+    c.fillStyle = '#d9c9a0';
+    for (let r = 2; r < lh - 3; r += 3) c.fillRect(ex + 4, ly + r + 3, lw - 4, 1);
+    if (sort > 0.4) coeur(ex + ew / 2, ly + Math.max(3, Math.round(lh * 0.35)), Math.max(1, Math.floor(lw / 14)), '#d42a4a');
+    c.fillStyle = '#fbf4e4';
+    c.fillRect(ex, ey + Math.round(eh * 0.42), ew, eh - Math.round(eh * 0.42));
+    c.fillStyle = '#e4d6ae';
+    for (let k = 0; k < ew / 2; k++) {
+      const dy = Math.round((k * eh * 0.5) / (ew / 2));
+      c.fillRect(ex + k, ey + Math.round(eh * 0.42) + (Math.round(eh * 0.5) - dy), 1, 1);
+      c.fillRect(ex + ew - 1 - k, ey + Math.round(eh * 0.42) + (Math.round(eh * 0.5) - dy), 1, 1);
+    }
+    // Le rabat : ouvert au-dessus, fermé en V sur l'enveloppe.
+    const rabat = Math.round(eh * 0.5);
+    c.fillStyle = ouvre > 0.5 ? '#d9c9a0' : '#fbf4e4';
+    for (let k = 0; k < ew / 2; k++) {
+      const h = Math.round(((ew / 2 - k) * rabat) / (ew / 2));
+      const y0 = ouvre > 0.5 ? ey - Math.round(h * ouvre) : ey;
+      const hh = ouvre > 0.5 ? Math.round(h * ouvre) : h;
+      c.fillRect(ex + k, y0, 1, Math.max(1, hh));
+      c.fillRect(ex + ew - 1 - k, y0, 1, Math.max(1, hh));
+    }
+    // Le cachet de cire sur le rabat fermé.
+    if (p >= 0.72) {
+      const s = Math.max(1, Math.floor(ew / 18));
+      const pop = lisse((p - 0.72) / 0.06);
+      c.globalAlpha = fin * pop;
+      coeur(ex + ew / 2, ey + Math.round(eh * 0.5), s + (pop < 1 ? 1 : 0), '#d42a4a');
+    }
+    c.globalAlpha = 1;
+    // La bordure d'enveloppe par avion, au pied de l'écran.
+    for (let x = 0; x < G.w; x++) {
+      c.fillStyle = (x + Math.floor(t * 6)) % 8 < 3 ? '#d42a4a' : (x + Math.floor(t * 6)) % 8 < 4 ? '#fbf4e4' : (x + Math.floor(t * 6)) % 8 < 7 ? '#2b5a96' : '#fbf4e4';
+      c.fillRect(x, G.sur - 13, 1, 1);
+    }
+    finir();
+  },
 };
 
 const VERTEX = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -3425,7 +3509,7 @@ function demarre() {
   };
 
   // Programme quand personne ne choisit : le titre, puis chaque jeu à tour de rôle.
-  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito', 'mafia', 'frise', 'disgrace', 'contrebande', 'mytho'];
+  const PROGRAMME = ['titre', 'indian', 'sniper', 'equation', 'gang', 'skull', 'perudo', 'liar', 'bw', 'coup', 'cockroach', 'hanabi', 'wavelength', 'undercover', 'inspecteur', 'justone', 'skyjo', 'trio', 'citadelles', 'avalon', 'removeone', 'balancemancala', 'layinggrass', 'timeauction', 'zoo', 'secretnumber', 'loupgarou', 'ito', 'mafia', 'frise', 'disgrace', 'contrebande', 'mytho', 'loveletter'];
   let indice = 0;
   let prochain = 1000;
   let verrouille = null;
@@ -3501,7 +3585,7 @@ function demarre() {
     const b = l.getBoundingClientRect();
     return [(b.left + b.width / 2) / G.cellule, b.top / G.cellule];
   };
-  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48], mafia: [1, 0.42, 0.84], frise: [0.66, 0.83, 1], disgrace: [0.9, 0.64, 0.85], contrebande: [0.91, 0.79, 0.48], mytho: [1, 0.44, 0.38] };
+  const COULEURS = { indian: [1, 0.4, 0.26], sniper: [1, 0.2, 0.33], equation: [0.43, 0.84, 1], gang: [0.96, 0.77, 0.32], skull: [0.78, 0.57, 1], perudo: [1, 0.18, 0.58], liar: [0.95, 0.92, 0.85], bw: [1, 1, 1], coup: [0.56, 0.65, 1], cockroach: [0.31, 0.82, 0.63], hanabi: [0.85, 0.94, 0.35], wavelength: [1, 0.54, 0.17], undercover: [0.4, 0.88, 0.31], inspecteur: [0.88, 0.72, 0.49], justone: [0.29, 0.53, 1], skyjo: [0.93, 0.42, 1], trio: [0.13, 0.78, 0.77], citadelles: [0.71, 0.36, 1], avalon: [1, 0.56, 0.64], removeone: [0.68, 0.72, 0.76], balancemancala: [1, 0.29, 0.24], layinggrass: [0.56, 0.86, 0.25], timeauction: [1, 0.7, 0.36], zoo: [0.62, 0.94, 0.81], secretnumber: [1, 0.88, 0.29], loupgarou: [0.72, 0.68, 1], ito: [1, 0.62, 0.48], mafia: [1, 0.42, 0.84], frise: [0.66, 0.83, 1], disgrace: [0.9, 0.64, 0.85], contrebande: [0.91, 0.79, 0.48], mytho: [1, 0.44, 0.38], loveletter: [1, 0.35, 0.48] };
   liens.forEach((l) => {
     const choisit = () => {
       verrouille = l.dataset.scene;
